@@ -1,0 +1,9 @@
+{
+  "accuracy": 0.9865,
+  "precision_macro": 0.9872,
+  "recall_macro": 0.9865,
+  "f1_macro": 0.9865,
+  "num_eval_samples": 741,
+  "num_val_samples": 741,
+  "evaluation_split": "test"
+}

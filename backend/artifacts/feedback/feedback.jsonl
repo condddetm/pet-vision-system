@@ -1,0 +1,4 @@
+{"timestamp": "2026-05-01T07:29:00.155104Z", "file_name": "pytest_sample.jpg", "predicted_breed": "Maine_Coon", "predicted_confidence": 0.81, "correct_breed": "Russian_Blue", "note": "pytest 自动化测试样本"}
+{"timestamp": "2026-05-01T07:29:31.591936Z", "file_name": "pytest_sample.jpg", "predicted_breed": "Maine_Coon", "predicted_confidence": 0.81, "correct_breed": "Russian_Blue", "note": "pytest 自动化测试样本"}
+{"timestamp": "2026-05-01T07:29:59.556075Z", "file_name": "pytest_sample.jpg", "predicted_breed": "Maine_Coon", "predicted_confidence": 0.81, "correct_breed": "Russian_Blue", "note": "pytest 自动化测试样本"}
+{"timestamp": "2026-05-01T07:37:43.636167Z", "file_name": "pytest_sample.jpg", "predicted_breed": "Maine_Coon", "predicted_confidence": 0.81, "correct_breed": "Russian_Blue", "note": "pytest 自动化测试样本"}

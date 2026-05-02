@@ -1,0 +1,8 @@
+{
+  "miou": 0.8895,
+  "dice": 0.9374,
+  "pixel_acc": 0.9709,
+  "num_eval_samples": 739,
+  "num_val_samples": 739,
+  "evaluation_split": "test"
+}

@@ -1,0 +1,766 @@
+% =============================================================================
+% 智能宠物视觉系统 — 项目汇报幻灯片（LaTeX Beamer）
+% 编译: xelatex experiment_ppt.tex (运行两次生成交叉引用)
+% 依赖: XeLaTeX + ctex + beamer + metropolis theme (TeX Live / MiKTeX 默认包含)
+% =============================================================================
+
+\documentclass[aspectratio=169, 11pt]{ctexbeamer}
+
+% ─── 主题 ─────────────────────────────────────────────────────────
+\usetheme[progressbar=frametitle, block=fill, sectionpage=progressbar]{metropolis}
+\setbeamertemplate{frame numbering}[fraction]
+
+% ─── 数学字体：使用衬线 Latin Modern Math 渲染公式 ────────────────
+% 否则 metropolis 主题会让 \[ \] 中的公式也使用 Fira Sans，
+% 导致分数线/上下标/积分号等结构丢失（仅 Unicode 符号能显示）。
+\usefonttheme[onlymath]{serif}
+
+% ─── 颜色：与报告保持一致的深蓝主色 ────────────────────────────────
+\definecolor{NWUBlue}{RGB}{30, 60, 150}
+\definecolor{NWUBlueLight}{RGB}{80, 120, 200}
+\definecolor{AccentOrange}{RGB}{240, 140, 60}
+\definecolor{TextDark}{RGB}{30, 35, 45}
+\definecolor{BlockBG}{RGB}{240, 245, 252}
+
+\setbeamercolor{frametitle}{bg=NWUBlue, fg=white}
+\setbeamercolor{title}{fg=NWUBlue}
+\setbeamercolor{author}{fg=TextDark}
+\setbeamercolor{normal text}{fg=TextDark}
+\setbeamercolor{alerted text}{fg=AccentOrange}
+\setbeamercolor{progress bar}{fg=NWUBlue}
+\setbeamercolor{block title}{bg=NWUBlue!20, fg=NWUBlue}
+\setbeamercolor{block body}{bg=BlockBG, fg=TextDark}
+
+% ─── 包 ─────────────────────────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric, shadows, calc}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{fontawesome5}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+\renewcommand{\arraystretch}{1.2}
+
+% ─── 封面信息 ────────────────────────────────────────────────────
+\title{\bfseries 基于深度学习的智能宠物视觉信息系统}
+\subtitle{多任务视觉分析：图像分类 + 语义分割 + 可解释性}
+\author{陈登科\quad\textcolor{gray!70!black}{\scriptsize 2023117319 · 软件工程}}
+\institute{西北大学信息科学与技术学院\\\vspace{0.3em}\scriptsize 智能信息系统综合实践 · 挑战项 D}
+\date{\today}
+
+% ─── 自定义命令：图片智能引用 ────────────────────────────────────
+% #1 文件名  #2 宽度占比（相对 \linewidth）
+% 同时限制最大高度为 0.68\textheight，避免竖长截图撑破幻灯片
+\newcommand{\figorph}[2]{%
+  \IfFileExists{images/screenshots/#1}{%
+    \includegraphics[width=#2\linewidth, height=0.68\textheight, keepaspectratio]{images/screenshots/#1}%
+  }{%
+    \fcolorbox{gray!40}{gray!10}{%
+      \parbox[c][3.5cm][c]{#2\linewidth}{\centering\footnotesize\color{gray!70!black}%
+        \faCamera\ \textit{#1}}%
+    }%
+  }%
+}
+% 矮版本：单帧内出现多图时（如 2x2 网格）限制更严的高度
+\newcommand{\figorphs}[2]{%
+  \IfFileExists{images/screenshots/#1}{%
+    \includegraphics[width=#2\linewidth, height=0.32\textheight, keepaspectratio]{images/screenshots/#1}%
+  }{%
+    \fcolorbox{gray!40}{gray!10}{%
+      \parbox[c][2.5cm][c]{#2\linewidth}{\centering\footnotesize\color{gray!70!black}%
+        \faCamera\ \textit{#1}}%
+    }%
+  }%
+}
+
+% ─── 页脚：西北大学标识 ──────────────────────────────────────────
+\setbeamertemplate{footline}{%
+  \leavevmode%
+  \hbox{%
+    \begin{beamercolorbox}[wd=0.5\paperwidth, ht=2.3ex, dp=1ex, leftskip=1em]{author in head/foot}%
+      \usebeamerfont{author in head/foot}\textcolor{gray!60!black}{\scriptsize 智能宠物视觉系统 · 实验报告}%
+    \end{beamercolorbox}%
+    \begin{beamercolorbox}[wd=0.5\paperwidth, ht=2.3ex, dp=1ex, rightskip=1em]{title in head/foot}%
+      \hfill\usebeamerfont{title in head/foot}\textcolor{gray!60!black}{\scriptsize \insertframenumber{} / \inserttotalframenumber}%
+    \end{beamercolorbox}%
+  }%
+  \vskip0pt%
+}
+
+% =============================================================================
+\begin{document}
+
+% ─── 封面 ───────────────────────────────────────────────────────
+{\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+\begin{columns}[T]
+  \begin{column}{0.18\linewidth}
+    \IfFileExists{images/cover/nwu_logo.png}{%
+      \includegraphics[width=\linewidth, keepaspectratio]{images/cover/nwu_logo.png}%
+    }{%
+      \fbox{\parbox[c][2.2cm][c]{\linewidth}{\centering\tiny\color{gray!70!black}校徽}}
+    }
+  \end{column}
+  \begin{column}{0.80\linewidth}
+    \vspace{0.2em}
+    \IfFileExists{images/cover/nwu_name.png}{%
+      \includegraphics[width=0.9\linewidth, keepaspectratio]{images/cover/nwu_name.png}%
+    }{%
+      \fbox{\parbox[c][1.6cm][c]{0.9\linewidth}{\centering\tiny\color{gray!70!black}西北大学校名}}
+    }
+  \end{column}
+\end{columns}
+
+\vspace{0.3em}
+\begin{center}\color{NWUBlue}\rule{0.75\linewidth}{1pt}\end{center}
+
+\vspace{0.6em}
+\begin{center}
+  {\LARGE\bfseries\color{NWUBlue}基于深度学习的智能宠物视觉信息系统\par}
+  \vspace{0.3em}
+  {\large\color{gray!50!black}多任务视觉分析：图像分类 + 语义分割 + 可解释性\par}
+\end{center}
+
+\vspace{0.6em}
+\begin{center}\footnotesize
+\begin{tabular}{rl}
+  \color{NWUBlue}\bfseries 汇报人：   & \textbf{陈登科} \\
+  \color{NWUBlue}\bfseries 学\hspace{1em}号： & 2023117319 \\
+  \color{NWUBlue}\bfseries 专\hspace{1em}业： & 软件工程 \\
+  \color{NWUBlue}\bfseries 课\hspace{1em}程： & 智能信息系统综合实践 · 挑战项 D \\
+  \color{NWUBlue}\bfseries 日\hspace{1em}期： & \today \\
+\end{tabular}
+\end{center}
+\end{frame}
+}
+
+% ─── 目录 ───────────────────────────────────────────────────────
+\begin{frame}{汇报大纲}
+\vspace{0.4em}
+\begin{columns}[T]
+  \begin{column}{0.48\linewidth}
+    \begin{block}{\faRocket\ 项目背景与目标}
+      \footnotesize 任务要求、数据集、研究意义
+    \end{block}
+    \begin{block}{\faCube\ 模型选型与方法}
+      \footnotesize ResNet-34、U-Net、Grad-CAM
+    \end{block}
+    \begin{block}{\faChartBar\ 实验结果}
+      \footnotesize 分类 / 分割指标、三模型对比、训练曲线
+    \end{block}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \begin{block}{\faDesktop\ 可视化系统}
+      \footnotesize 架构、五大页面、三模式推理、交互细节
+    \end{block}
+    \begin{block}{\faSearch\ 结果分析}
+      \footnotesize 混淆矩阵、高错品种、Grad-CAM 观察
+    \end{block}
+    \begin{block}{\faCheckCircle\ 总结与展望}
+      \footnotesize 主要贡献、局限、未来方向
+    \end{block}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% =============================================================================
+\section{项目背景与目标}
+% =============================================================================
+
+\begin{frame}{研究背景与任务}
+\begin{columns}[T]
+  \begin{column}{0.55\linewidth}
+    \textbf{课程任务（挑战项 D）}
+    \begin{itemize}\footnotesize
+      \item \alert{多任务视觉分析}：分类 + 分割并行
+      \item 基于 Oxford-IIIT Pet 数据集
+      \item 端到端 Web 可视化系统
+      \item 含加分扩展：Grad-CAM / 批量并发 / 摄像头等
+    \end{itemize}
+    \vspace{0.5em}
+    \textbf{研究意义}
+    \begin{itemize}\footnotesize
+      \item \textbf{细粒度挑战}：37 类亲缘品种区分
+      \item \textbf{标注完整}：像素级 trimap
+      \item \textbf{工程化价值}：从实验到产品级系统
+    \end{itemize}
+  \end{column}
+  \begin{column}{0.42\linewidth}
+    \centering
+    \begin{tikzpicture}[scale=0.85, every node/.style={transform shape}]
+      \node[rounded corners, draw=NWUBlue, very thick, fill=NWUBlue!10,
+            minimum width=4cm, minimum height=1cm, align=center] (input)
+        {\footnotesize\textbf{输入图像}\\\tiny 224$\times$224 宠物照片};
+      \node[rounded corners, draw=AccentOrange, very thick, fill=AccentOrange!10,
+            minimum width=1.9cm, minimum height=1cm, align=center, below left=1cm and -0.2cm of input] (cls)
+        {\footnotesize\textbf{分类}\\\tiny ResNet-34};
+      \node[rounded corners, draw=AccentOrange, very thick, fill=AccentOrange!10,
+            minimum width=1.9cm, minimum height=1cm, align=center, below right=1cm and -0.2cm of input] (seg)
+        {\footnotesize\textbf{分割}\\\tiny U-Net};
+      \node[rounded corners, draw=NWUBlue, very thick, fill=NWUBlue!20,
+            minimum width=4cm, minimum height=0.9cm, align=center, below=2.7cm of input] (out)
+        {\footnotesize\textbf{多任务输出}\\\tiny Top-5 + mask + Grad-CAM};
+      \draw[-Stealth, thick, NWUBlue] (input) -- (cls);
+      \draw[-Stealth, thick, NWUBlue] (input) -- (seg);
+      \draw[-Stealth, thick, NWUBlue] (cls) -- (out);
+      \draw[-Stealth, thick, NWUBlue] (seg) -- (out);
+    \end{tikzpicture}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{数据集：Oxford-IIIT Pet}
+\begin{columns}[T]
+  \begin{column}{0.48\linewidth}
+    \textbf{\color{NWUBlue}核心统计}
+    \vspace{0.3em}
+    \begin{center}\footnotesize
+    \begin{tabular}{lr}
+      \toprule
+      \textbf{指标} & \textbf{数值} \\
+      \midrule
+      图像总数       & 7,390 \\
+      类别总数       & 37 \\
+      \quad 犬科品种 & 25 \\
+      \quad 猫科品种 & 12 \\
+      每类样本数     & 184 -- 200 \\
+      训练/验证/测试 & 7 : 2 : 1 \\
+      \quad Train / Val / Test & 5173 / 1476 / 741 \\
+      \bottomrule
+    \end{tabular}
+    \end{center}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \centering
+    \figorph{dataset_pie.png}{0.85}\\
+    \vspace{0.3em}
+    {\tiny\color{gray!60!black}犬 / 猫 类别占比（25 : 12）}
+  \end{column}
+\end{columns}
+
+\vspace{0.4em}
+\begin{alertblock}{\footnotesize 关键特点}
+\footnotesize 类别分布\textbf{近似均衡}（极差仅 16 张）→ 无需加权损失；\textbf{trimap 像素级标注}→ 天然适配分割任务；存在细粒度亲缘品种（如 American Bulldog $\leftrightarrow$ Pit Bull Terrier）可考验模型判别能力。
+\end{alertblock}
+\end{frame}
+
+% =============================================================================
+\section{模型选型与方法}
+% =============================================================================
+
+\begin{frame}{方法概览：三大模型组合}
+\begin{center}\footnotesize
+\begin{tabular}{L{2.3cm}L{4.4cm}L{5cm}}
+  \toprule
+  \textbf{\color{NWUBlue}任务} & \textbf{\color{NWUBlue}模型} & \textbf{\color{NWUBlue}设计要点} \\
+  \midrule
+  图像分类 & ResNet-34（ImageNet 预训练）& 残差连接 + 迁移学习；\texttt{fc} 层替换为 Linear(512, 37) \\
+  分类基线1 & ResNet-34（随机初始化）& 对照组：验证迁移学习收益 \\
+  分类基线2 & SimpleCNN（自定义 4 层）& 容量对照：参数量仅 0.37M（1/50 ResNet-34）\\
+  语义分割 & U-Net（ResNet-34 编码器）& 编码器共享主干 + 跳跃连接 \\
+  可解释性 & Grad-CAM \texttt{@ layer4[-1]} & 类激活热力图，JET 调色板叠加原图 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{0.6em}
+\begin{columns}[T]
+  \begin{column}{0.48\linewidth}
+    \begin{block}{\footnotesize\faBrain\ 分类核心：迁移学习}
+      \scriptsize 保留 ImageNet 骨干权重，仅替换最后 FC 层；Adam 优化器、$\eta = 10^{-3}$、100 epoch。
+    \end{block}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \begin{block}{\footnotesize\faPuzzlePiece\ 分割核心：主干共享}
+      \scriptsize U-Net 编码器=ResNet-34（与分类一致）；BCEWithLogits 损失；30 epoch 训练至 Dice 收敛。
+    \end{block}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{Grad-CAM 可解释性流程}
+\begin{center}
+\begin{tikzpicture}[
+  node distance=0.4cm,
+  every node/.style={font=\tiny, transform shape},
+  pstep/.style={rectangle, rounded corners=3pt, draw=NWUBlue, very thick,
+                top color=NWUBlue!5, bottom color=NWUBlue!25, minimum width=2.2cm, minimum height=0.75cm, align=center},
+  data/.style={rectangle, rounded corners=3pt, draw=teal!60!black, very thick,
+               top color=teal!5, bottom color=teal!25, minimum width=2.2cm, minimum height=0.75cm, align=center},
+  pout/.style={rectangle, rounded corners=3pt, draw=AccentOrange!80!black, very thick,
+               top color=AccentOrange!15, bottom color=AccentOrange!45, minimum width=2.2cm, minimum height=0.75cm, align=center},
+  arrow/.style={-{Stealth[length=2mm]}, semithick, draw=gray!60!black}
+]
+  \node[data] (input) {输入图像\\$224\!\times\!224$};
+  \node[pstep, right=of input] (fwd) {前向传播\\ResNet-34};
+  \node[pstep, right=of fwd] (logit) {Top-1 logit\\$y_{c^*}$};
+  \node[pstep, right=of logit] (back) {反向至\\\texttt{layer4[-1]}};
+  \node[pstep, below=1.1cm of back] (grad) {通道梯度};
+  \node[pstep, left=of grad] (gap) {GAP → $\alpha_k$};
+  \node[pstep, left=of gap] (wt) {$\sum_k \alpha_k A^k$};
+  \node[pout, left=of wt] (cam) {ReLU + JET\\叠加原图};
+  \draw[arrow] (input) -- (fwd); \draw[arrow] (fwd) -- (logit); \draw[arrow] (logit) -- (back);
+  \draw[arrow] (back.south) -- (grad.north);
+  \draw[arrow] (grad) -- (gap); \draw[arrow] (gap) -- (wt); \draw[arrow] (wt) -- (cam);
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.2em}
+\begin{columns}[T]
+  \begin{column}{0.5\linewidth}
+    \begin{block}{\footnotesize 权重公式}
+    \footnotesize\vspace{-0.3em}
+    \[ \alpha_k^{c^*} = \frac{1}{HW}\sum_{h,w}\frac{\partial y_{c^*}}{\partial A_{h,w}^k} \]
+    \[ L^{c^*} = \mathrm{ReLU}\left(\sum_k \alpha_k^{c^*} A^k\right) \]
+    \end{block}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \begin{itemize}\footnotesize
+      \item \textbf{红色区域}：判别关键依据
+      \item \textbf{蓝色区域}：无关/背景
+      \item 上采样至原图尺寸，按 0.55 : 0.45 混合
+      \item 验证模型是否关注\textbf{语义正确}的特征
+    \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% =============================================================================
+\section{实验结果}
+% =============================================================================
+
+\begin{frame}{分类实验结果：主模型}
+\begin{columns}[T]
+  \begin{column}{0.45\linewidth}
+    \textbf{\color{NWUBlue}ResNet-34 (ImageNet 预训练)}
+    \vspace{0.3em}
+    \begin{center}\footnotesize
+    \begin{tabular}{lr}
+      \toprule
+      \textbf{指标} & \textbf{测试集} \\
+      \midrule
+      Accuracy             & \alert{\textbf{0.9865}} \\
+      Precision (macro)    & 0.9872 \\
+      Recall (macro)       & 0.9865 \\
+      F1 (macro)           & 0.9865 \\
+      测试样本数           & 741 \\
+      \bottomrule
+    \end{tabular}
+    \end{center}
+    \vspace{0.5em}
+    \begin{alertblock}{\footnotesize 观察}
+      \footnotesize Accuracy 与 macro-F1 高度一致（$\Delta<0.01$），\textbf{各品种均衡识别}，无明显薄弱类别。
+    \end{alertblock}
+  \end{column}
+  \begin{column}{0.52\linewidth}
+    \centering
+    \figorph{analysis_metrics.png}{1.0}\\
+    \vspace{0.3em}
+    {\tiny\color{gray!60!black}来自 \texttt{/analysis} 页面双任务指标横幅}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{三模型对比：迁移学习收益分析}
+\vspace{-0.3em}
+\begin{columns}[T]
+  \begin{column}{0.48\linewidth}
+    \centering\footnotesize
+    \begin{tabular}{L{3cm}cc}
+      \toprule
+      \textbf{模型} & \textbf{Acc} & \textbf{$\Delta$} \\
+      \midrule
+      ResNet-34 (PT) & \alert{\textbf{0.9865}} & 基线 \\
+      ResNet-34 (RI) & 0.6831 & $-30.3\%$ \\
+      SimpleCNN      & 0.5115 & $-47.5\%$ \\
+      \bottomrule
+    \end{tabular}
+    \vspace{0.6em}
+    \begin{block}{\footnotesize 两大结论}
+    \footnotesize
+    \begin{enumerate}
+      \item \textbf{迁移学习收益显著}：ImageNet 预训练带来 \alert{+30.3\%} 提升
+      \item \textbf{容量 $\neq$ 关键}：ResNet-34 RI 与 SimpleCNN 差距（17\%）远小于 PT vs RI 差距（30\%）
+    \end{enumerate}
+    \end{block}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \centering
+    \figorph{extra_models.png}{1.0}\\
+    \vspace{0.2em}
+    {\tiny\color{gray!60!black}三模型在 4 个指标上的横向对比}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{训练曲线：收敛动态}
+\begin{columns}[T]
+  \begin{column}{0.58\linewidth}
+    \centering
+    \figorph{analysis_curves.png}{1.0}
+  \end{column}
+  \begin{column}{0.4\linewidth}
+    \begin{itemize}\footnotesize
+      \item \textbf{ResNet-34 PT}：Loss 0.67 → 0.06；val\_acc 第 5 轮达 0.849，第 100 轮收敛 0.926；测试集 \alert{0.9865}
+      \item \textbf{ResNet-34 RI}：收敛显著缓慢，测试集仅 0.6831
+      \item \textbf{SimpleCNN}：val\_acc 0.08 → 0.547；容量瓶颈
+      \item \textbf{U-Net}：Dice 第 1 轮 0.853 → 第 25 轮 0.914，测试集 \alert{0.9374}
+    \end{itemize}
+  \end{column}
+\end{columns}
+
+\vspace{0.4em}
+\begin{alertblock}{\footnotesize 核心观察}
+\footnotesize 预训练模型\textbf{第 10 轮前}即达 90\%+ 准确率；随机初始化模型需数十轮才能脱离随机水平（2.7\%）。\texttt{ReduceLROnPlateau} 与早停机制使所有模型尾段平稳收敛，无明显过拟合。
+\end{alertblock}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{分割实验结果：U-Net}
+\begin{columns}[T]
+  \begin{column}{0.4\linewidth}
+    \centering\footnotesize
+    \begin{tabular}{lr}
+      \toprule
+      \textbf{指标} & \textbf{数值} \\
+      \midrule
+      Dice           & \alert{\textbf{0.9374}} \\
+      mIoU           & 0.8895 \\
+      Pixel Accuracy & 0.9709 \\
+      测试样本数     & 739 \\
+      \bottomrule
+    \end{tabular}
+    \vspace{0.6em}
+    \begin{block}{\footnotesize 编码器对照}
+      \footnotesize\centering
+      \begin{tabular}{lc}
+        U-Net (PT) & \textbf{0.9374} \\
+        U-Net (RI) & 0.8213 \\
+      \end{tabular}
+      \\[0.3em]
+      \scriptsize 迁移学习收益：\alert{+11.6\% Dice}
+    \end{block}
+  \end{column}
+  \begin{column}{0.58\linewidth}
+    \centering
+    \figorph{analysis_segmentation.png}{1.0}\\
+    \vspace{0.3em}
+    {\tiny\color{gray!60!black}分割三联：原图 / 预测 mask / 叠加可视化}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% =============================================================================
+\section{可视化系统}
+% =============================================================================
+
+\begin{frame}{系统架构与技术栈}
+\begin{columns}[T]
+  \begin{column}{0.5\linewidth}
+    \textbf{\color{NWUBlue}前后端分离架构}
+    \begin{itemize}\footnotesize
+      \item \textbf{前端}：Vue 3 + Vite 5 + Element Plus + ECharts
+      \item \textbf{后端}：FastAPI + PyTorch 2.4 + segmentation-models-pytorch
+      \item \textbf{通信}：14 个 REST API + 1 个 WebSocket 端点
+      \item \textbf{部署}：Docker Compose 一键编排
+    \end{itemize}
+    \vspace{0.5em}
+    \textbf{\color{NWUBlue}五大功能页面}
+    \begin{itemize}\footnotesize
+      \item \texttt{/}\,首页  \quad\texttt{/dataset}\,数据集
+      \item \texttt{/predict}\,推理（三模式）
+      \item \texttt{/analysis}\,实验分析  \quad\texttt{/extra}\,扩展
+    \end{itemize}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \centering
+    \begin{tikzpicture}[scale=0.75, every node/.style={font=\tiny, transform shape}]
+      \node[rounded corners, draw=NWUBlue, very thick, fill=NWUBlue!15,
+            minimum width=4.5cm, minimum height=0.8cm, align=center] (ui) {\bfseries 浏览器（Vue 3 + Element Plus）};
+      \node[rounded corners, draw=NWUBlue, very thick, fill=NWUBlue!10,
+            minimum width=4.5cm, minimum height=0.8cm, align=center, below=0.45cm of ui] (nginx) {\bfseries Nginx（反向代理）};
+      \node[rounded corners, draw=AccentOrange, very thick, fill=AccentOrange!10,
+            minimum width=4.5cm, minimum height=0.8cm, align=center, below=0.45cm of nginx] (api) {\bfseries FastAPI（REST + WebSocket）};
+      \node[rounded corners, draw=AccentOrange, very thick, fill=AccentOrange!15,
+            minimum width=4.5cm, minimum height=0.8cm, align=center, below=0.45cm of api] (svc) {\bfseries Services 层};
+      \node[rounded corners, draw=teal!60!black, very thick, fill=teal!10,
+            minimum width=4.5cm, minimum height=0.8cm, align=center, below=0.45cm of svc] (torch) {\bfseries PyTorch · ResNet-34 / U-Net};
+      \draw[-Stealth, thick, NWUBlue] (ui) -- (nginx) node[midway, right] {\scriptsize HTTP/WS};
+      \draw[-Stealth, thick, NWUBlue] (nginx) -- (api);
+      \draw[-Stealth, thick, AccentOrange!80!black] (api) -- (svc);
+      \draw[-Stealth, thick, AccentOrange!80!black] (svc) -- (torch);
+    \end{tikzpicture}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{系统首页：八大核心能力}
+\begin{center}
+\figorph{system_features.png}{0.92}
+\end{center}
+\vspace{-0.2em}
+\begin{center}\footnotesize\color{gray!60!black}
+多任务推理 · Top-K 预测 · Grad-CAM · 摄像头识别 · 批量并发 · 错误反馈闭环 · 中英双语 · PDF 报告导出
+\end{center}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{推理页：三模式互斥 Tab 切换}
+\begin{columns}[T]
+  \begin{column}{0.32\linewidth}
+    \centering
+    \figorph{system_predict_single.png}{1.0}\\
+    \vspace{0.2em}
+    {\scriptsize\bfseries\color{NWUBlue}单张推理}\\
+    {\tiny\color{gray!60!black}Top-5 + 分割 + Grad-CAM}
+  \end{column}
+  \begin{column}{0.32\linewidth}
+    \centering
+    \figorph{system_predict_batch.png}{1.0}\\
+    \vspace{0.2em}
+    {\scriptsize\bfseries\color{teal!60!black}批量推理}\\
+    {\tiny\color{gray!60!black}3 路并发 + CSV 导出}
+  \end{column}
+  \begin{column}{0.32\linewidth}
+    \centering
+    \figorph{system_predict_compare.png}{1.0}\\
+    \vspace{0.2em}
+    {\scriptsize\bfseries\color{purple!60!black}三模型对比}\\
+    {\tiny\color{gray!60!black}同图三模型并排输出}
+  \end{column}
+\end{columns}
+
+\vspace{0.4em}
+\begin{alertblock}{\footnotesize 亮点}
+\footnotesize 每种模式均支持上传 / 摄像头 / 粘贴 / 样例四种输入方式；批量推理 3 路并发有效压缩总耗时；三模型对比辅以底部对比洞察文字。
+\end{alertblock}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{模型预测功能演示：4 类代表性输入}
+\begin{columns}[T]
+  \begin{column}{0.48\linewidth}
+    \centering
+    \figorphs{predict_demo_cat_short.png}{1.0}\\
+    {\tiny\color{gray!60!black}\textbf{短毛猫}（Abyssinian / Bengal）：高置信度，Grad-CAM 聚焦眼鼻}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \centering
+    \figorphs{predict_demo_dog_long.png}{1.0}\\
+    {\tiny\color{gray!60!black}\textbf{长毛狗}（Samoyed / Pomeranian）：分割处理毛发边缘}
+  \end{column}
+\end{columns}
+
+\vspace{0.2em}
+
+\begin{columns}[T]
+  \begin{column}{0.48\linewidth}
+    \centering
+    \figorphs{predict_demo_dog_short.png}{1.0}\\
+    {\tiny\color{gray!60!black}\textbf{短毛狗}（Pug / Boxer）：鼻吻部清晰，Grad-CAM 集中面部}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \centering
+    \figorphs{predict_demo_difficult.png}{1.0}\\
+    {\tiny\color{gray!60!black}\textbf{困难样本}（Maine Coon / Russian Blue）：Top-5 仍含真实类别}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{系统交互细节：完整用户闭环}
+\begin{columns}[T]
+  \begin{column}{0.24\linewidth}
+    \centering
+    \figorphs{system_websocket.png}{1.0}\\
+    {\tiny\textbf{\color{NWUBlue}WebSocket}}\\
+    {\tiny 分阶段日志流}
+  \end{column}
+  \begin{column}{0.24\linewidth}
+    \centering
+    \figorphs{system_feedback_form.png}{1.0}\\
+    {\tiny\textbf{\color{NWUBlue}错误反馈}}\\
+    {\tiny JSONL 持久化}
+  \end{column}
+  \begin{column}{0.24\linewidth}
+    \centering
+    \figorphs{system_camera.png}{1.0}\\
+    {\tiny\textbf{\color{NWUBlue}摄像头识别}}\\
+    {\tiny WebRTC 实时抓拍}
+  \end{column}
+  \begin{column}{0.24\linewidth}
+    \centering
+    \figorphs{system_history.png}{1.0}\\
+    {\tiny\textbf{\color{NWUBlue}历史记录}}\\
+    {\tiny localStorage 缓存}
+  \end{column}
+\end{columns}
+
+\vspace{0.6em}
+\begin{alertblock}{\footnotesize 超越「纯预测」的用户闭环}
+\footnotesize 让系统不仅能\textbf{做预测}，还能\textbf{看}（WebSocket 过程可见）、\textbf{改}（错误反馈）、\textbf{存}（历史记录）、\textbf{再训}（JSONL 积累数据）—— 形成完整的数据-模型正循环。
+\end{alertblock}
+\end{frame}
+
+% =============================================================================
+\section{结果分析}
+% =============================================================================
+
+\begin{frame}{混淆矩阵与高错品种分析}
+\begin{columns}[T]
+  \begin{column}{0.5\linewidth}
+    \centering
+    \figorph{analysis_confusion.png}{1.0}\\
+    {\tiny\color{gray!60!black}$37 \times 37$ 混淆矩阵}
+  \end{column}
+  \begin{column}{0.47\linewidth}
+    \textbf{\color{NWUBlue}9 个错误品种（基于实际数据）}
+    \vspace{0.2em}
+    \begin{center}\tiny
+    \begin{tabular}{L{2.3cm}cL{2.5cm}}
+      \toprule
+      \textbf{品种} & \textbf{错误率} & \textbf{主要混淆} \\
+      \midrule
+      German Shorthaired  & 10\% & Basset Hound \\
+      Birman              & 5\%  & Ragdoll \\
+      Bombay              & 5\%  & British Shorthair \\
+      Am. Bulldog         & 5\%  & Am. Pit Bull T. \\
+      Am. Pit Bull T.     & 5\%  & Boxer \\
+      Boxer               & 5\%  & Staffordshire BT \\
+      Eng. Cocker Sp.     & 5\%  & English Setter \\
+      Newfoundland        & 5\%  & Scottish Terrier \\
+      Pomeranian          & 5\%  & Samoyed \\
+      \bottomrule
+    \end{tabular}
+    \end{center}
+    \vspace{0.2em}
+    \scriptsize\color{gray!70!black} 混淆集中在\textbf{同大类亲缘品种}（同体型斗犬、长毛大型猫），跨大类误判极罕见。
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{Grad-CAM 可解释性观察}
+\begin{columns}[T]
+  \begin{column}{0.5\linewidth}
+    \centering
+    \figorph{analysis_gradcam.png}{1.0}\\
+    {\tiny\color{gray!60!black}\texttt{layer4[-1]} 类激活热力图}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \textbf{\color{NWUBlue}核心观察}
+    \begin{itemize}\footnotesize
+      \item \textbf{短毛猫}：热力图集中在 \alert{面部三角区}（双眼 + 鼻）
+      \item \textbf{长毛狗}：分布更分散，覆盖面部与躯干毛色纹理
+      \item \textbf{错误案例}：部分偏向背景（草地 / 家具）—— 暴露背景干扰隐患
+    \end{itemize}
+    \vspace{0.5em}
+    \begin{alertblock}{\footnotesize 可解释性价值}
+      \footnotesize 证实模型学到了\textbf{语义合理}的判别特征（看脸），而非依赖背景\textit{spurious correlation}，为模型决策合理性提供了可视化证据。
+    \end{alertblock}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% =============================================================================
+\section{工程化与总结}
+% =============================================================================
+
+\begin{frame}{工程化实践}
+\begin{columns}[T]
+  \begin{column}{0.48\linewidth}
+    \begin{block}{\footnotesize\faDocker\ Docker 容器化}
+      \footnotesize \texttt{docker-compose.yml} 一键编排；Nginx 反代 + gzip；Python 3.10-slim + OpenCV
+    \end{block}
+    \begin{block}{\footnotesize\faLock\ API 限流与加固}
+      \footnotesize \texttt{slowapi} 限流：推理端点 30/min、反馈 10/min；CORS 白名单
+    \end{block}
+    \begin{block}{\footnotesize\faVial\ 自动化测试 34 用例}
+      \footnotesize \textbf{pytest 12}：健康检查 / OpenAPI / 推理参数 / 反馈 \\
+      \textbf{vitest 22}：混淆矩阵工具函数 / API 封装
+    \end{block}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \begin{block}{\footnotesize\faBolt\ 前端构建优化}
+      \footnotesize \texttt{manualChunks} 手动分包：\\
+      \vspace{0.2em}
+      \scriptsize
+      \begin{tabular}{lr}
+        vendor-vue     & $\sim$61 KB \\
+        vendor-element & $\sim$332 KB \\
+        vendor-echarts & $\sim$343 KB \\
+        vendor-pdf     & $\sim$187 KB \\
+        业务代码       & $\sim$61 KB \\
+      \end{tabular}
+      \\[0.3em]
+      主业务 chunk 从 3 MB → 165 KB（\alert{缩小 95\%}）
+    \end{block}
+    \begin{block}{\footnotesize\faFileExport\ PDF 报告导出}
+      \footnotesize \texttt{html2canvas-pro} + \texttt{jsPDF} 多页切片；客户端直接下载
+    \end{block}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+\begin{frame}{总结与展望}
+\begin{columns}[T]
+  \begin{column}{0.48\linewidth}
+    \textbf{\color{NWUBlue}\faCheckCircle\ 主要成果}
+    \begin{itemize}\footnotesize
+      \item 分类主模型 \alert{Accuracy = 0.9865}；分割主模型 \alert{Dice = 0.9374}
+      \item 完整三模型对比，量化迁移学习收益 \alert{+30.3\%}
+      \item 端到端 Web 系统：14 API + 5 页面 + 三模式推理
+      \item Grad-CAM 可解释性分析验证判别依据合理性
+      \item 工程化落地：Docker + 34 测试 + 前端性能优化
+    \end{itemize}
+  \end{column}
+  \begin{column}{0.48\linewidth}
+    \textbf{\color{AccentOrange}\faLightbulb\ 改进方向}
+    \begin{itemize}\footnotesize
+      \item \textbf{模型}：升级至 ResNet-50 / ConvNeXt / ViT
+      \item \textbf{数据}：主动收集亲缘品种的多视角样本
+      \item \textbf{训练}：加入 MixUp / Mosaic / CutMix 高级增强
+      \item \textbf{系统}：引入 ONNX Runtime + GPU 推理集群
+      \item \textbf{可解释性}：扩展到 Grad-CAM++ 或 Integrated Gradients
+      \item \textbf{部署}：在线学习闭环（用户反馈数据自动再训练）
+    \end{itemize}
+  \end{column}
+\end{columns}
+\end{frame}
+
+% ─────────────────────────────────────────────────────────────────
+{\setbeamertemplate{footline}{}
+\begin{frame}[plain]
+\vspace*{\fill}
+\begin{center}
+  \textbf{\Huge\color{NWUBlue} 感谢聆听！}\\[1em]
+  {\Large\color{gray!50!black} Questions \& Discussion}\\[2em]
+
+  \begin{tikzpicture}
+    \node[rounded corners=8pt, draw=NWUBlue, very thick, fill=NWUBlue!5,
+          inner sep=1em] {
+      \begin{tabular}{rl}
+        \color{NWUBlue}\bfseries 项目 & 基于深度学习的智能宠物视觉信息系统 \\
+        \color{NWUBlue}\bfseries 汇报人 & 陈登科（2023117319） \\
+        \color{NWUBlue}\bfseries 学院 & 西北大学信息科学与技术学院 \\
+        \color{NWUBlue}\bfseries 专业 & 软件工程 \\
+      \end{tabular}
+    };
+  \end{tikzpicture}
+\end{center}
+\vfill
+\end{frame}
+}
+
+\end{document}

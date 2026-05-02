@@ -1,0 +1,1046 @@
+% =============================================================================
+% 基于深度学习的智能宠物视觉信息系统 — 使用手册
+% 编译命令: xelatex usage_manual.tex (建议运行两次以生成正确目录)
+% 依赖: XeLaTeX + ctex 宏包 (TeX Live / MiKTeX 默认包含)
+% =============================================================================
+
+\documentclass[12pt, a4paper, openany]{ctexbook}
+
+% ─── 页面布局 ───────────────────────────────────────────────────────────────
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ─── 字体与排版 ─────────────────────────────────────────────────────────────
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+
+% ─── 架构图绘制 ─────────────────────────────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows.meta, positioning, backgrounds, fit, calc}
+
+% ─── 代码高亮 ───────────────────────────────────────────────────────────────
+\usepackage{listings}
+\definecolor{codebg}{RGB}{248,250,252}
+\definecolor{codekw}{RGB}{37,99,235}
+\definecolor{codestr}{RGB}{16,185,129}
+\definecolor{codecmt}{RGB}{100,116,139}
+\definecolor{codeframe}{RGB}{226,232,240}
+
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekw}\bfseries,
+  stringstyle=\color{codestr},
+  commentstyle=\color{codecmt}\itshape,
+  rulecolor=\color{codeframe},
+  frame=single,
+  framesep=4pt,
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=2,
+  showstringspaces=false,
+  numbers=left,
+  numberstyle=\tiny\color{codecmt},
+  numbersep=8pt,
+  xleftmargin=14pt,
+  captionpos=b,
+}
+
+% ─── 提示框 ─────────────────────────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{tipbox}[1][]{
+  enhanced, breakable,
+  colback=blue!5, colframe=blue!50!black,
+  fonttitle=\bfseries, title=\faIcon{info-circle}~ 提示,
+  boxrule=0.5pt, arc=2mm,
+  #1
+}
+
+\newtcolorbox{warnbox}[1][]{
+  enhanced, breakable,
+  colback=orange!5, colframe=orange!70!black,
+  fonttitle=\bfseries, title=\faIcon{exclamation-triangle}~ 注意,
+  boxrule=0.5pt, arc=2mm,
+  #1
+}
+
+\newtcolorbox{notebox}[2][]{
+  enhanced, breakable,
+  colback=gray!5, colframe=gray!50,
+  fonttitle=\bfseries, title=#2,
+  boxrule=0.5pt, arc=2mm,
+  #1
+}
+
+% ─── 图标 ───────────────────────────────────────────────────────────────────
+\usepackage{fontawesome5}
+
+% ─── 超链接 ─────────────────────────────────────────────────────────────────
+\usepackage[colorlinks=true,
+  linkcolor=blue!70!black,
+  urlcolor=blue!70!black,
+  citecolor=blue!70!black,
+  pdftitle={基于深度学习的智能宠物视觉信息系统使用手册},
+  pdfauthor={课程大作业},
+  pdfsubject={题目 D 多任务视觉分析}
+]{hyperref}
+
+% ─── 章节样式 ───────────────────────────────────────────────────────────────
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{blue!70!black}}
+  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{blue!70!black}}
+  {\thesection}{1em}{}
+
+% ─── 页眉页脚 ───────────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\nouppercase{\leftmark}}
+\fancyhead[RE,LO]{\textbf{智能宠物视觉系统 · 使用手册}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ─── 表格相关命令 ───────────────────────────────────────────────────────────
+\renewcommand{\arraystretch}{1.4}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% =============================================================================
+\begin{document}
+
+% ─── 封面 ───────────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+
+  {\Huge\bfseries 基于深度学习的\\[0.3cm] 智能宠物视觉信息系统 \par}
+  \vspace{0.5cm}
+  {\Large\itshape 使用手册 \par}
+
+  \vspace{1.5cm}
+
+  \rule{\linewidth}{0.5mm}
+  \vspace{0.4cm}
+
+  {\large
+    课程大作业 ·\ 挑战项 D：多任务视觉分析 \\[0.4cm]
+    图像分类 + 图像分割 + Grad-CAM 可解释性
+  }
+
+  \vspace{0.4cm}
+  \rule{\linewidth}{0.5mm}
+
+  \vspace{2cm}
+
+  \begin{center}
+    \begin{tabular}{rl}
+      \textbf{数据集}    & Oxford-IIIT Pet (37 类，7{,}390 张) \\
+      \textbf{分类指标}  & Test Accuracy = 0.9865 \\
+      \textbf{分割指标}  & Test Dice = 0.9374 / mIoU = 0.8895 \\
+      \textbf{后端}      & FastAPI + PyTorch \\
+      \textbf{前端}      & Vue 3 + Element Plus + ECharts \\
+    \end{tabular}
+  \end{center}
+
+  \vfill
+  {\large 文档版本 v1.0 \\[0.2cm] \today \par}
+\end{titlepage}
+
+% ─── 目录 ───────────────────────────────────────────────────────────────────
+\tableofcontents
+\thispagestyle{empty}
+\cleardoublepage
+
+% ─── 正文 ───────────────────────────────────────────────────────────────────
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+% =============================================================================
+\chapter{系统简介}
+% =============================================================================
+
+\section{项目背景}
+
+本项目是面向\textbf{挑战项 D（多任务视觉分析）}的课程大作业实现，
+基于公开数据集 \textbf{Oxford-IIIT Pet} 完成宠物图像的分类与分割双任务，
+并通过共享 ResNet-34 主干网络进行端到端训练，实现单次推理同时输出
+品种识别结果与像素级前景分割掩膜。
+
+系统提供完整的 Web 可视化界面，覆盖从数据集探索、模型训练曲线、
+推理交互、实验分析到 PDF 报告导出的完整工作流。
+
+\section{核心能力}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{图像分类}\ — 37 类宠物品种识别，ResNet-34 微调，测试集 Accuracy 达 \textbf{98.65\%}。
+  \item \textbf{图像分割}\ — U-Net (ResNet-34 编码器) 二值前景分割，
+        Dice = \textbf{0.9374}，mIoU = \textbf{0.8895}，Pixel Accuracy = \textbf{0.9709}。
+  \item \textbf{多模型对比}\ — ResNet-34 (ImageNet 预训练) / ResNet-34 (随机初始化) /
+        SimpleCNN (自定义 4 层 CNN) 同图三模型对比推理。
+  \item \textbf{Grad-CAM 可解释性}\ — 在 ResNet-34 \texttt{layer4[-1]} 注册 Hook 反向传播生成类激活热力图。
+  \item \textbf{实时摄像头识别}\ — 调用浏览器 \texttt{getUserMedia} 抓帧直接推理，无需上传文件。
+  \item \textbf{批量并发推理}\ — 多图同时上传，3 路并发，支持单张重试与 CSV 导出。
+  \item \textbf{WebSocket 实时日志}\ — 推理过程逐阶段流式推送（解码 / 分类 / 分割 / 叠加）。
+  \item \textbf{PDF 报告导出}\ — 切片输出多页 A4 完整实验报告。
+  \item \textbf{错误反馈闭环}\ — 用户标注误判结果写入 JSONL，用于后续模型迭代。
+  \item \textbf{中英双语切换}\ — vue-i18n 全站文案中 / 英 一键切换。
+\end{itemize}
+
+\section{技术栈}
+
+\begin{center}
+\begin{tabular}{lL{9cm}}
+  \toprule
+  \textbf{层级} & \textbf{技术选型} \\
+  \midrule
+  后端 & FastAPI · Uvicorn · PyTorch · torchvision · OpenCV · Pillow \\
+  前端 & Vue 3 · Vite · Element Plus · ECharts · vue-i18n · html2canvas-pro · jsPDF · axios \\
+  模型 & ResNet-34 (ImageNet pretrained) · U-Net (ResNet-34 encoder) · SimpleCNN (custom) \\
+  数据 & Oxford-IIIT Pet (37 类，7{,}390 张图像) \\
+  通信 & REST API + WebSocket \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{系统架构}
+
+系统采用经典的三层架构设计：前端展示层、后端服务层、模型推理层。前端与后端通过
+REST API 交互推理请求，同时通过 WebSocket 实现实时推理日志的流式推送。
+
+\vspace{0.5em}
+\begin{center}
+\begin{tikzpicture}[
+  node distance=0.7cm,
+  layer/.style 2 args={
+    rectangle, rounded corners=5pt,
+    draw=#1!60!black, thick,
+    top color=#1!5, bottom color=#1!18,
+    minimum width=12cm, minimum height=#2,
+    align=center, font=\sffamily
+  },
+  arrow/.style={
+    -{Stealth[length=3mm,width=2.5mm]}, thick, draw=gray!70
+  },
+  pipelabel/.style={
+    fill=white, font=\small\sffamily, inner sep=2pt, text=gray!50!black
+  }
+]
+
+% Layer 1: Browser
+\node[layer={blue}{1.5cm}] (browser) {%
+  \textbf{\large 浏览器（Vue 3 单页应用）} \\[3pt]
+  \footnotesize Intro\ ·\ Dataset\ ·\ Predict\ ·\ Analysis\ ·\ Extra%
+};
+
+% Layer 2: FastAPI
+\node[layer={teal}{1.5cm}, below=1.6cm of browser] (fastapi) {%
+  \textbf{\large FastAPI 后端服务} \\[3pt]
+  \footnotesize infer\ ·\ dataset\ ·\ metrics\ ·\ feedback\ ·\ ws\_infer%
+};
+
+% Layer 3: Service
+\node[layer={violet}{1.5cm}, below=0.9cm of fastapi] (service) {%
+  \textbf{\large Service 层（推理与业务逻辑）} \\[3pt]
+  \footnotesize classify\ ·\ segment\ ·\ multitask\ ·\ compare\ ·\ gradcam%
+};
+
+% Layer 4: Weights
+\node[layer={orange}{1.5cm}, below=0.9cm of service] (weights) {%
+  \textbf{\large PyTorch 模型权重（.pth）} \\[3pt]
+  \footnotesize cls\_torch.pth (ResNet-34)\ ·\ seg\_unet.pth (U-Net)\ ·\ cls\_simple\_cnn.pth (SimpleCNN)%
+};
+
+% Arrows: browser <-> fastapi (HTTP + WebSocket)
+\draw[arrow] ([xshift=-2.5cm]browser.south) -- node[pipelabel]{HTTP REST} ([xshift=-2.5cm]fastapi.north);
+\draw[arrow] ([xshift=2.5cm]browser.south) -- node[pipelabel]{WebSocket} ([xshift=2.5cm]fastapi.north);
+
+% Arrows: fastapi -> service -> weights
+\draw[arrow] (fastapi.south) -- (service.north);
+\draw[arrow] (service.south) -- (weights.north);
+
+\end{tikzpicture}
+\end{center}
+
+% =============================================================================
+\chapter{安装与部署}
+% =============================================================================
+
+\section{系统要求}
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{组件} & \textbf{最低版本} \\
+  \midrule
+  操作系统    & Windows 10 / 11 或 Linux (Ubuntu 20.04+) \\
+  Python      & 3.10 及以上 \\
+  Node.js     & 18 LTS 及以上 \\
+  浏览器      & Chrome 90+ / Edge 90+ / Firefox 88+ \\
+  显卡 (可选) & NVIDIA GPU + CUDA 12.1（用于训练加速） \\
+  内存        & 8 GB 及以上（推理）/ 16 GB 及以上（训练） \\
+  硬盘空间    & 5 GB（含模型权重 + 数据集 + node\_modules） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}
+推理阶段使用 CPU 即可流畅运行（单张约 200 ms）。
+GPU 仅在重新训练模型时显著加速。
+\end{tipbox}
+
+\section{后端环境配置}
+
+\subsection{安装 Python 依赖}
+
+\begin{lstlisting}[language=bash]
+cd backend
+pip install -r requirements.txt
+\end{lstlisting}
+
+\subsection{安装 GPU 版 PyTorch（推荐）}
+
+如需 GPU 训练，请重新安装 CUDA 版本：
+
+\begin{lstlisting}[language=bash]
+pip uninstall -y torch torchvision torchaudio
+pip install torch torchvision torchaudio --index-url \
+    https://download.pytorch.org/whl/cu121
+\end{lstlisting}
+
+验证 CUDA 可用性：
+
+\begin{lstlisting}[language=bash]
+python -c "import torch; print(torch.cuda.is_available())"
+\end{lstlisting}
+
+\section{前端环境配置}
+
+\begin{lstlisting}[language=bash]
+cd frontend
+npm install
+\end{lstlisting}
+
+\textbf{核心前端依赖：}
+
+\begin{center}
+\begin{tabular}{lL{8cm}}
+  \toprule
+  \textbf{包名} & \textbf{用途} \\
+  \midrule
+  \texttt{vue@3} + \texttt{vue-router@4} & 单页应用框架 \\
+  \texttt{element-plus} + \texttt{@element-plus/icons-vue} & UI 组件库 + 图标 \\
+  \texttt{echarts} & 训练曲线 / 混淆矩阵 / 雷达图 \\
+  \texttt{vue-i18n@9} & 中英双语国际化 \\
+  \texttt{html2canvas-pro} + \texttt{jspdf} & PDF 多页报告导出 \\
+  \texttt{axios} & HTTP 客户端 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{模型权重}
+
+三个权重文件统一存放于 \texttt{backend/weights/}，后端服务启动时自动加载：
+
+\begin{center}
+\begin{tabular}{L{5.2cm}cL{5cm}}
+  \toprule
+  \textbf{权重文件} & \textbf{大小} & \textbf{对应模型} \\
+  \midrule
+  \texttt{cls\_torch.pth}              & ~85 MB & ResNet-34 (pretrained, 100 ep) \\
+  \texttt{seg\_unet.pth}               & ~98 MB & U-Net (ResNet-34 encoder, 30 ep) \\
+  \texttt{cls\_simple\_cnn.pth}        & ~14 MB & SimpleCNN (4 层 CNN, 50 ep) \\
+  \texttt{cls\_torch\_random\_init.pth}  & ~85 MB & ResNet-34 (随机初始化对比组) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{warnbox}
+后端启动时会自动检查以上文件是否存在。如缺少权重文件，请参考第 \ref{ch:training} 章节进行训练。
+训练脚本默认输出到上述路径，无需手动移动文件。
+\end{warnbox}
+
+\section{数据集准备}
+
+\subsection{下载地址}
+
+\begin{itemize}
+  \item Images: \url{https://www.robots.ox.ac.uk/~vgg/data/pets/data/images.tar.gz}
+  \item Annotations: \url{https://www.robots.ox.ac.uk/~vgg/data/pets/data/annotations.tar.gz}
+\end{itemize}
+
+下载后解压到项目根目录 \texttt{data/pets/}。
+
+\subsection{目录结构}
+
+\begin{verbatim}
+data/pets/
+├── images/                      # 7,390 张宠物图片 (*.jpg)
+└── annotations/
+    ├── trimaps/                 # 像素级 trimap 分割标注 (*.png)
+    ├── list.txt                 # 原始官方清单
+    ├── trainval.txt
+    └── test.txt
+\end{verbatim}
+
+% =============================================================================
+\chapter{启动系统}
+% =============================================================================
+
+\section{一键启动（Windows 推荐）}
+
+项目根目录提供自包含的 \texttt{start\_all.bat} 脚本，双击即可自动在两个独立控制台窗口中同时启动服务：
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{脚本} & \textbf{用途} \\
+  \midrule
+  \texttt{start\_all.bat} & 同时启动后端（8000）+ 前端（5173） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{tipbox}
+脚本内已处理启动顺序：后端先启动，延迟 3 秒让模型权重就绪，再拉起前端。
+关闭任一窗口即可停止对应服务。
+\end{tipbox}
+
+\section{手动启动（跨平台）}
+
+\subsection{启动后端}
+
+\begin{lstlisting}[language=bash]
+cd backend
+uvicorn app.main:app --reload --port 8000
+\end{lstlisting}
+
+启动成功后控制台输出：
+
+\begin{lstlisting}
+INFO:     Uvicorn running on http://127.0.0.1:8000
+INFO:     Application startup complete.
+\end{lstlisting}
+
+\subsection{启动前端}
+
+\begin{lstlisting}[language=bash]
+cd frontend
+npm run dev
+\end{lstlisting}
+
+启动成功后控制台输出：
+
+\begin{lstlisting}
+  VITE v5.x.x  ready in xxx ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+\end{lstlisting}
+
+\section{访问地址}
+
+\begin{center}
+\begin{tabular}{lL{8cm}}
+  \toprule
+  \textbf{用途} & \textbf{URL} \\
+  \midrule
+  前端主页面            & \url{http://localhost:5173}            \\
+  后端 API 根地址       & \url{http://127.0.0.1:8000}            \\
+  后端交互式 API 文档   & \url{http://127.0.0.1:8000/docs}       \\
+  静态资源（训练产物）   & \url{http://127.0.0.1:8000/static/...} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\chapter{项目介绍页（首页）}
+% =============================================================================
+
+访问 \url{http://localhost:5173/} 进入项目首页。
+
+\section{页面构成}
+
+首页采用 Hero 横幅 + 模块卡片布局，包含以下区块：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Hero 横幅}\ — 项目标题、副标题与四个关键指标（37 类、7390 张、98.65\% 分类准确率、0.9374 分割 Dice）。
+  \item \textbf{完整处理流程图}\ — 4 步可视化流程（数据加载 → 预处理 → 模型推理 → 结果可视化）。
+  \item \textbf{模型卡片}\ — 三个使用模型的简介卡片。
+  \item \textbf{多任务网络架构图}\ — SVG 绘制的共享主干 + 双分支结构示意图。
+  \item \textbf{系统亮点}\ — 6 张卡片展示核心扩展能力（实时摄像头 / Grad-CAM / 三模型对比 / PDF 导出 / 批量推理 / WebSocket 日志）。
+  \item \textbf{技术栈}\ — 主要技术依赖徽章。
+  \item \textbf{项目说明}\ — 评估口径、数据划分等关键说明。
+\end{enumerate}
+
+\section{使用建议}
+
+首页主要用于\textbf{快速了解项目全貌}。新用户建议从首页开始浏览，
+熟悉系统能力后再进入「模型预测」页面进行实际操作。
+
+% =============================================================================
+\chapter{数据集展示页}
+% =============================================================================
+
+通过左侧导航栏进入「数据集」或访问 \url{http://localhost:5173/dataset}。
+
+\section{页面构成}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{数据集概览卡}\ — 显示总图片数、类别数、训练/验证/测试划分比例。
+  \item \textbf{类别分布饼图}\ — 猫科 vs 犬科占比环形图。
+  \item \textbf{品种样本网格}\ — 6 个代表性品种的「原图 + 分割掩膜 + 叠加效果」三联展示。
+  \item \textbf{数据增强预览}\ — 选择品种后展示 8 种增强变体（HFlip / Rotate / Crop / Brightness / ColorJitter / Blur / Combined / Original）。
+  \item \textbf{37 类详细分布条形图}\ — 按样本数升序排列，标记不足 200 张的类别（橙色警示）；默认折叠展示前部分，可点击「查看完整 37 类」展开。
+\end{enumerate}
+
+\section{使用建议}
+
+\begin{tipbox}
+\begin{itemize}
+  \item 通过\textbf{数据增强预览}可以直观理解训练阶段的数据扩充策略。
+  \item 类别分布条形图\textbf{折叠功能}避免长滚动列表占据屏幕。
+\end{itemize}
+\end{tipbox}
+
+% =============================================================================
+\chapter{模型预测页（核心功能）}
+% =============================================================================
+
+通过左侧导航栏进入「模型预测」或访问 \url{http://localhost:5173/predict}。
+
+本页是系统的核心交互页面，提供\textbf{三种推理模式}的 Tab 切换：
+
+\begin{itemize}
+  \item \textbf{单张推理}（蓝色主题）— 单个文件深度分析
+  \item \textbf{批量推理}（绿色主题）— 多文件并发处理
+  \item \textbf{三模型对比}（紫色主题）— 同图多模型横向对比
+\end{itemize}
+
+\section{单张推理模式}
+
+\subsection{上传图片}
+
+提供\textbf{三种上传方式}，可任选其一：
+
+\begin{enumerate}
+  \item \textbf{拖拽上传}\ — 直接将图片拖入虚线框区域。
+  \item \textbf{点击上传}\ — 点击虚线框打开文件选择对话框。
+  \item \textbf{摄像头拍摄}\ — 点击右上角「摄像头」按钮调出实时拍摄对话框。
+  \item \textbf{使用样例}\ — 点击下方样例缩略图直接载入。
+  \item \textbf{粘贴图片}\ — 复制图片后直接 \texttt{Ctrl+V} 粘贴。
+\end{enumerate}
+
+\subsection{执行推理}
+
+点击「\textbf{运行推理}」按钮启动推理流程。可选两种模式：
+
+\begin{itemize}
+  \item \textbf{标准模式}\ — REST API 单次请求，返回完整结果。
+  \item \textbf{实时模式}\ — 打开「启用实时日志」开关后改用 WebSocket，
+        推理过程逐阶段流式推送（解码 → 分类 → 分割 → 叠加），
+        日志面板实时显示进度。
+\end{itemize}
+
+\subsection{查看结果}
+
+推理完成后页面右栏依次展示：
+
+\begin{enumerate}
+  \item \textbf{深色结果横幅}\ — 显示预测品种、置信度百分比、推理耗时。
+  \item \textbf{Top-5 候选}\ — 概率前 5 名品种与置信度条形图。
+  \item \textbf{宠物覆盖率}\ — 像素级分割得到的前景占比环形图。
+  \item \textbf{多维度可视化对比}\ — 4 列网格对比：原图 / 分割掩膜 / 半透明叠加 / Grad-CAM 热力图。
+\end{enumerate}
+
+\begin{tipbox}
+Grad-CAM 热力图为推理后\textbf{异步生成}（约 1 秒），加载完成前显示「生成 Grad-CAM…」橙色提示。
+红色区域表示模型重点关注的判定区域。
+\end{tipbox}
+
+\subsection{错误反馈}
+
+如果模型预测错误，点击结果横幅右上角的「\textbf{反馈错误}」按钮打开反馈对话框：
+
+\begin{enumerate}
+  \item 选择正确品种（37 类下拉）。
+  \item 可选填写补充说明。
+  \item 点击「提交」即可。后台将记录写入 \texttt{backend/artifacts/feedback/feedback.jsonl}。
+\end{enumerate}
+
+\section{批量推理模式}
+
+\subsection{添加图片}
+
+支持以下添加方式：
+
+\begin{itemize}
+  \item 拖拽多张图片到顶部上传框。
+  \item 点击上传框打开多选对话框。
+  \item 拖拽到右侧「批量上传」面板（更大热区）。
+\end{itemize}
+
+\subsection{并发推理控制}
+
+\begin{itemize}
+  \item \textbf{最大并发}\ — 默认 3 路（避免 GPU 显存压力）。
+  \item \textbf{进度面板}\ — 顶部 4 个状态卡片（待处理 / 处理中 / 已完成 / 失败）。
+  \item \textbf{重试单张}\ — 失败任务卡片支持单独重试。
+  \item \textbf{清空全部}\ — 一键清空所有任务。
+\end{itemize}
+
+\subsection{筛选与导出}
+
+\begin{itemize}
+  \item \textbf{状态筛选}\ — Tab 切换查看「全部 / 待处理 / 处理中 / 完成 / 失败」。
+  \item \textbf{品种筛选}\ — 下拉框按预测品种过滤。
+  \item \textbf{CSV 导出}\ — 点击「导出 CSV」下载所有结果（包含文件名、预测品种、置信度、推理时间等）。
+\end{itemize}
+
+\section{三模型对比模式}
+
+\subsection{上传图片}
+
+仅需上传\textbf{一张}图片。系统会自动调用三个模型分别推理。
+
+\subsection{结果展示}
+
+展示三张并列卡片：
+
+\begin{center}
+\begin{tabular}{lL{6cm}c}
+  \toprule
+  \textbf{标识} & \textbf{模型} & \textbf{预期表现} \\
+  \midrule
+  \textbf{PT}  & ResNet-34 (ImageNet 预训练 + 微调)  & 高准确率 (~98\%) \\
+  \textbf{RI}  & ResNet-34 (随机初始化，未预训练)    & 中等准确率 (~68\%) \\
+  \textbf{CNN} & SimpleCNN (自定义 4 层 CNN)         & 较低准确率 (~51\%) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+每张卡片显示：模型名称、初始化方式、参数量、Test Accuracy、本张图片的 Top-1 预测、Top-5 候选、推理耗时。
+
+\subsection{对比洞察}
+
+页面底部自动生成「\textbf{对比洞察}」文字块，提示：
+
+\begin{itemize}
+  \item 三模型是否一致预测；
+  \item 预训练 vs 随机初始化的精度差距；
+  \item SimpleCNN 与 ResNet-34 的容量差异。
+\end{itemize}
+
+% =============================================================================
+\chapter{实验分析页}
+% =============================================================================
+
+通过左侧导航栏进入「实验分析」或访问 \url{http://localhost:5173/analysis}。
+
+\section{页面构成}
+
+页面采用 Tab 切换 + 长页面滚动相结合的布局：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{深色指标横幅}\ — 双任务核心指标：分类 Acc / Precision / Recall / F1，
+        分割 Dice / mIoU / Pixel Acc。
+  \item \textbf{对比总览}\ — 三模型分类准确率对比柱状图 + 关键提升幅度。
+  \item \textbf{训练曲线}\ — Loss / Val Loss / Accuracy / Dice 曲线（ECharts）。
+  \item \textbf{混淆矩阵}\ — 37×37 热力图，点击单元格弹出详细错误分布。
+  \item \textbf{预测案例}\ — 5 张正确分类 + 5 张典型错误案例。
+  \item \textbf{复现实验}\ — 完整训练命令清单，可复制复现结果。
+\end{enumerate}
+
+\section{PDF 报告导出}
+
+\subsection{操作步骤}
+
+\begin{enumerate}
+  \item 滚动至页面顶部，点击右上角「\textbf{导出 PDF}」按钮。
+  \item 等待 5–10 秒（取决于页面长度），下方显示进度提示。
+  \item 浏览器自动下载 \texttt{智能宠物视觉系统-实验分析报告.pdf}。
+\end{enumerate}
+
+\subsection{导出内容}
+
+PDF 包含完整的实验分析页快照，按 A4 纸尺寸自动切片为多页（约 8–12 页）。
+
+\subsection{导出特性}
+
+\begin{itemize}
+  \item 使用 \texttt{html2canvas-pro} 替代标准版以兼容现代 CSS（如 \texttt{color-mix()}）。
+  \item 切片算法在分页时优先选择卡片边界，避免文字截断。
+  \item 自动添加页眉、页码与导出时间戳。
+\end{itemize}
+
+\section{回顶按钮}
+
+页面滚动超过 600 px 时，右下角自动出现\textbf{蓝色圆形回顶按钮}。点击平滑滚动至顶部。
+
+% =============================================================================
+\chapter{扩展分析页}
+% =============================================================================
+
+通过左侧导航栏进入「扩展」或访问 \url{http://localhost:5173/extra}。
+
+\section{页面构成}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{三模型分类对比图}\ — 横向条形图直观对比 Accuracy / Precision / Recall / F1。
+  \item \textbf{Top-6 高错品种}\ — 列出最难分类的 6 个品种及典型混淆对（如缅因猫 vs 挪威森林猫）。
+  \item \textbf{完整超参数表}\ — 三列对比 ResNet-34 / SimpleCNN / U-Net 的优化器、学习率、batch size、epoch 等。
+  \item \textbf{模型局限性}\ — 6 项已识别的系统短板（小目标分割、罕见品种识别等）。
+  \item \textbf{未来方向}\ — 4 项可改进点（数据增强策略、模型蒸馏、多尺度融合等）。
+\end{enumerate}
+
+% =============================================================================
+\chapter{高级功能详解}
+% =============================================================================
+
+\section{实时摄像头识别}
+
+\subsection{使用步骤}
+
+\begin{enumerate}
+  \item 在「单张推理」模式下，点击上传卡右上角的「\textbf{摄像头}」按钮。
+  \item 浏览器弹出权限请求，点击「允许」授权。
+  \item 摄像头预览以 16:9 显示在深色对话框中，附带绿色取景框与红色 LIVE 标签。
+  \item 将宠物对准镜头中央，点击「\textbf{拍摄并识别}」按钮。
+  \item 系统自动捕获当前帧，转换为 JPEG，走标准单张推理流程。
+\end{enumerate}
+
+\subsection{权限要求}
+
+\begin{warnbox}
+浏览器要求 HTTPS 或 \texttt{localhost} / \texttt{127.0.0.1} 才能调用 \texttt{getUserMedia} API。
+本地开发默认满足。如部署到内网 IP，需配置 HTTPS 证书或在 Chrome
+\url{chrome://flags/\#unsafely-treat-insecure-origin-as-secure} 加入白名单。
+\end{warnbox}
+
+\section{Grad-CAM 可解释性}
+
+\subsection{原理简介}
+
+Grad-CAM (Gradient-weighted Class Activation Mapping) 通过反向传播 Top-1 类的梯度
+到指定卷积层（本系统选择 ResNet-34 \texttt{layer4[-1]}），按通道全局平均池化得到权重，
+加权融合该层激活后经 ReLU 与上采样，得到与原图对齐的热力图，
+直观展示模型判定品种的关键依据区域。
+
+\subsection{触发方式}
+
+\begin{itemize}
+  \item Grad-CAM 在单张推理\textbf{完成后异步触发}（不阻塞主结果展示）。
+  \item 完成后自动出现在「多维度可视化对比」第 4 张缩略图。
+  \item 加载中显示橙色「生成 Grad-CAM…」标签；完成后显示红色「含 Grad-CAM」标签。
+\end{itemize}
+
+\section{PDF 报告导出}
+
+详见第 7 章实验分析页相关说明。
+
+\section{中英双语切换}
+
+\begin{enumerate}
+  \item 点击顶部栏右上角的语言图标（\faIcon{language}）。
+  \item 选择「中文」或「English」即时切换。
+  \item 偏好保存在浏览器 localStorage，下次访问自动恢复。
+\end{enumerate}
+
+\section{错误反馈闭环}
+
+\subsection{用途}
+
+让用户对模型误判结果进行标注，反馈数据后续可用于：
+
+\begin{itemize}
+  \item 错例分析（找出模型薄弱品种）
+  \item 主动学习（优先收集易错样本扩充训练集）
+  \item 模型迭代评估
+\end{itemize}
+
+\subsection{后台数据}
+
+所有反馈以 JSON Lines 格式追加写入：
+
+\begin{lstlisting}
+backend/artifacts/feedback/feedback.jsonl
+\end{lstlisting}
+
+每行包含：时间戳、原始预测、正确标签、置信度、用户备注、文件名等字段。
+
+\section{WebSocket 实时日志}
+
+\subsection{开启方式}
+
+在「单张推理」模式上传图片后，打开\textbf{「启用实时日志」}开关，
+再点击「运行推理」即可。
+
+\subsection{日志面板}
+
+页面右栏出现深色终端风格面板，逐阶段显示：
+
+\begin{lstlisting}
+[INFO]  接收图片，准备推理...
+[OK]    解码完成 (1024x768)
+[OK]    分类完成: samoyed (98.7%)
+[OK]    分割完成: 前景占比 67.3%
+[OK]    叠加渲染完成
+[DONE]  全部任务完成 (耗时 246 ms)
+\end{lstlisting}
+
+% =============================================================================
+\chapter{常见问题}
+% =============================================================================
+
+\section{安装相关}
+
+\subsection*{Q1: pip 安装超时怎么办？}
+
+使用清华镜像源加速：
+
+\begin{lstlisting}[language=bash]
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple \
+    --timeout 120 --retries 10
+\end{lstlisting}
+
+\subsection*{Q2: 训练时使用 CPU 而非 GPU？}
+
+若日志显示 \texttt{Using device: cpu}，请重装 CUDA 版 PyTorch 并验证：
+
+\begin{lstlisting}[language=bash]
+python -c "import torch; print(torch.cuda.is_available())"
+\end{lstlisting}
+
+输出 \texttt{True} 表示 CUDA 已就绪。
+
+\section{运行相关}
+
+\subsection*{Q3: 后端启动失败提示找不到模型权重？}
+
+请确认 \texttt{backend/weights/} 目录下存在以下三个文件：
+
+\begin{itemize}
+  \item \texttt{cls\_torch.pth}
+  \item \texttt{seg\_unet.pth}
+  \item \texttt{cls\_simple\_cnn.pth}
+\end{itemize}
+
+如缺失，请参照训练章节命令重新训练，或从课程交付包中复制。
+
+\subsection*{Q4: 前端打开后接口报跨域错误？}
+
+确认后端运行在 \texttt{127.0.0.1:8000}（非 \texttt{localhost:8000}），
+后端 \texttt{main.py} 已启用 CORS 中间件并允许 \texttt{localhost:5173} 来源。
+
+\section{功能相关}
+
+\subsection*{Q5: 摄像头权限被拒？}
+
+\begin{itemize}
+  \item 浏览器需 HTTPS 或 \texttt{localhost} / \texttt{127.0.0.1} 才能调用 \texttt{getUserMedia}。
+  \item 本地开发默认满足。
+  \item 如部署到内网 IP 需配置 HTTPS 或在 Chrome \texttt{chrome://flags/\#unsafely-treat-insecure-origin-as-secure} 加入白名单。
+\end{itemize}
+
+\subsection*{Q6: PDF 导出时报色彩函数错误？}
+
+确保 \texttt{package.json} 使用的是 \texttt{html2canvas-pro} 而非原版 \texttt{html2canvas@1.4.1}。
+原版不支持 \texttt{color-mix()} 等现代 CSS 颜色函数，会导致页面截图失败。
+
+\subsection*{Q7: WebSocket 日志面板长时间无响应？}
+
+\begin{itemize}
+  \item 检查浏览器控制台是否有 WebSocket 连接错误。
+  \item 确认后端 \texttt{/ws/infer} 路由已加载（可访问 \url{http://127.0.0.1:8000/docs} 查看）。
+  \item 关闭浏览器代理软件（部分代理会拦截 WS 连接）。
+\end{itemize}
+
+\subsection*{Q8: 批量推理某些图片失败？}
+
+\begin{itemize}
+  \item 失败任务卡片右上角会显示重试按钮，点击重新提交。
+  \item 检查图片格式是否为 JPG / PNG / WEBP。
+  \item 检查后端控制台日志获取详细错误信息。
+\end{itemize}
+
+% =============================================================================
+\chapter{训练命令参考}
+\label{ch:training}
+% =============================================================================
+
+如需从零训练所有模型，请参照以下命令：
+
+\section{分类训练（ResNet-34）}
+
+\begin{lstlisting}[language=bash]
+python training/train_cls_torch.py \
+    --images_dir data/pets/images \
+    --epochs 100 --bs 32 --img_size 224 --patience 1000
+\end{lstlisting}
+
+\section{自定义 CNN 分类训练（SimpleCNN）}
+
+\begin{lstlisting}[language=bash]
+python training/train_cls_simple_cnn.py \
+    --images_dir data/pets/images \
+    --epochs 50 --bs 32 --img_size 224 --patience 8
+\end{lstlisting}
+
+\section{分割训练（U-Net）}
+
+\begin{lstlisting}[language=bash]
+python training/train_seg_unet.py \
+    --images_dir data/pets/images \
+    --trimaps_dir data/pets/annotations/trimaps \
+    --epochs 30 --bs 8 --img_size 256 --num_workers 6
+\end{lstlisting}
+
+\section{对比组：随机初始化 ResNet-34}
+
+\begin{lstlisting}[language=bash]
+python training/train_cls_torch.py \
+    --images_dir data/pets/images \
+    --epochs 100 --bs 32 --img_size 224 --patience 1000 \
+    --no-pretrained \
+    --out backend/weights/cls_torch_random_init.pth \
+    --curves_out backend/artifacts/classification/curves_random_init.json
+\end{lstlisting}
+
+% =============================================================================
+\appendix
+\chapter{API 端点速查}
+% =============================================================================
+
+\section{REST API}
+
+\begin{center}
+\begin{tabular}{llL{6cm}}
+  \toprule
+  \textbf{方法} & \textbf{路径} & \textbf{说明} \\
+  \midrule
+  POST & \texttt{/api/infer/multitask}            & 单张图片 → 分类 + 分割结果 \\
+  POST & \texttt{/api/infer/compare}              & 同图三模型对比推理 \\
+  POST & \texttt{/api/infer/gradcam}              & 生成 Grad-CAM 热力图 \\
+  GET  & \texttt{/api/dataset/stats}              & 数据集统计（类别分布等） \\
+  GET  & \texttt{/api/dataset/samples}            & 原图+mask+叠加 三联样本 \\
+  GET  & \texttt{/api/dataset/augmentation}       & 数据增强 8 变体预览 \\
+  GET  & \texttt{/api/metrics/summary}            & 分类 + 分割汇总指标 \\
+  GET  & \texttt{/api/metrics/curves}             & 训练曲线数据 \\
+  GET  & \texttt{/api/metrics/cases}              & 正确 / 错误案例图 \\
+  GET  & \texttt{/api/metrics/confusion-matrix}   & 混淆矩阵原始数据 \\
+  GET  & \texttt{/api/metrics/comparison}         & 三模型对比指标 \\
+  POST & \texttt{/api/feedback}                   & 提交错误反馈 \\
+  GET  & \texttt{/api/feedback/recent}            & 查询最近反馈 \\
+  GET  & \texttt{/api/feedback/stats}             & 反馈统计 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{WebSocket}
+
+\begin{center}
+\begin{tabular}{lL{8cm}}
+  \toprule
+  \textbf{路径} & \textbf{说明} \\
+  \midrule
+  \texttt{/ws/infer} & 流式推送推理过程，事件类型：\texttt{info} / \texttt{ok} / \texttt{error} / \texttt{done} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\chapter{模型性能指标}
+% =============================================================================
+
+\section{最终测试集指标}
+
+\begin{center}
+\begin{tabular}{llcc}
+  \toprule
+  \textbf{任务} & \textbf{指标} & \textbf{数值} & \textbf{评估样本数} \\
+  \midrule
+  \multirow{4}{*}{分类 (ResNet-34)} & Accuracy           & 0.9865 & 741 \\
+                                    & Precision (macro)  & 0.9872 & 741 \\
+                                    & Recall (macro)     & 0.9865 & 741 \\
+                                    & F1 (macro)         & 0.9865 & 741 \\
+  \midrule
+  \multirow{3}{*}{分割 (U-Net)}     & Dice               & 0.9374 & 739 \\
+                                    & mIoU               & 0.8895 & 739 \\
+                                    & Pixel Accuracy     & 0.9709 & 739 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{三模型分类对比}
+
+\begin{center}
+\begin{tabular}{lcc}
+  \toprule
+  \textbf{模型} & \textbf{Test Accuracy} & \textbf{相对预训练} \\
+  \midrule
+  ResNet-34 (ImageNet pretrained)    & 0.9865 & — \\
+  ResNet-34 (随机初始化)              & 0.6831 & $-$30.34\% \\
+  SimpleCNN (自定义 4 层)             & 0.5115 & $-$47.50\% \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{分割迁移学习对比}
+
+\begin{center}
+\begin{tabular}{lcc}
+  \toprule
+  \textbf{编码器初始化} & \textbf{Dice} & \textbf{相对预训练} \\
+  \midrule
+  ResNet-34 (ImageNet 预训练)  & 0.9374 & — \\
+  ResNet-34 (随机初始化)        & 0.8213 & $-$11.61\% \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+% =============================================================================
+\chapter{加分项实现清单}
+% =============================================================================
+
+本系统已实现如下扩展能力：
+
+\begin{center}
+\begin{tabular}{L{6cm}L{7cm}}
+  \toprule
+  \textbf{加分项} & \textbf{实现位置} \\
+  \midrule
+  Top-5 预测                  & \texttt{/predict} 单张推理结果区 \\
+  迁移学习 vs 从零训练对比     & \texttt{/predict} 三模型对比模式 \\
+  推理时间对比                 & 每个推理结果均显示 latency \\
+  多模型对比                   & 同图调用 3 个分类模型 \\
+  Grad-CAM 可解释性            & 单张推理多维度对比第 4 张图 \\
+  实时摄像头采集               & \texttt{/predict} 单张推理摄像头按钮 \\
+  历史记录                     & \texttt{/predict} 历史抽屉 \\
+  错误反馈闭环                 & 推理结果区反馈按钮 + JSONL 后端 \\
+  PDF 报告导出                 & \texttt{/analysis} 顶部导出按钮 \\
+  WebSocket 流式日志           & \texttt{/predict} 启用实时日志开关 \\
+  中英双语                     & 顶部栏语言切换按钮 \\
+  批量并发推理 + CSV 导出       & \texttt{/predict} 批量推理模式 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\vspace{2cm}
+\begin{center}
+\rule{0.5\linewidth}{0.4pt}\\[0.5cm]
+{\itshape — 文档结束 —}
+\end{center}
+
+\end{document}

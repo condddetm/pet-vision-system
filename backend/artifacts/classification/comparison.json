@@ -1,0 +1,62 @@
+[
+  {
+    "model": "ResNet34（ImageNet预训练）",
+    "task": "分类",
+    "acc": 0.9865,
+    "dice": null,
+    "note": "主模型，迁移学习",
+    "init": "ImageNet 预训练",
+    "split": "固定随机种子 7:2:1，测试集评估",
+    "command": "python training/train_cls_torch.py --images_dir data/pets/images --epochs 100 --bs 32 --img_size 224 --patience 1000 --pretrained --out backend/weights/cls_torch.pth",
+    "eval_command": "python training/eval_cls_torch.py --images_dir data/pets/images --ckpt backend/weights/cls_torch.pth --out_dir backend/artifacts/classification --img_size 224",
+    "output": "backend/weights/cls_torch.pth; backend/artifacts/classification/metrics.json; backend/artifacts/classification/curves.json"
+  },
+  {
+    "model": "ResNet34（随机初始化）",
+    "task": "分类",
+    "acc": 0.6831,
+    "dice": null,
+    "note": "对比实验，从零训练",
+    "init": "随机初始化",
+    "split": "与主模型一致：固定随机种子 7:2:1，测试集评估",
+    "command": "python training/train_cls_torch.py --images_dir data/pets/images --epochs 100 --bs 32 --img_size 224 --patience 1000 --no-pretrained --out backend/weights/cls_torch_random_init.pth --curves_out backend/artifacts/classification/curves_random_init.json",
+    "eval_command": "python training/eval_cls_torch.py --images_dir data/pets/images --ckpt backend/weights/cls_torch_random_init.pth --out_dir backend/artifacts/classification/random_init --img_size 224",
+    "output": "backend/weights/cls_torch_random_init.pth; backend/artifacts/classification/random_init/metrics.json; backend/artifacts/classification/curves_random_init.json"
+  },
+  {
+    "model": "SimpleCNN（自定义4层CNN）",
+    "task": "分类",
+    "acc": 0.5115,
+    "dice": null,
+    "note": "自定义基线模型，随机初始化",
+    "init": "随机初始化（无预训练）",
+    "split": "与主模型一致：固定随机种子 7:2:1，测试集评估",
+    "command": "python training/train_cls_simple_cnn.py --images_dir data/pets/images --epochs 50 --bs 32 --img_size 224 --patience 8",
+    "eval_command": "python training/eval_cls_simple_cnn.py --images_dir data/pets/images --ckpt backend/weights/cls_simple_cnn.pth --out_dir backend/artifacts/classification/simple_cnn --img_size 224",
+    "output": "backend/weights/cls_simple_cnn.pth; backend/artifacts/classification/simple_cnn/metrics.json; backend/artifacts/classification/curves_simple_cnn.json"
+  },
+  {
+    "model": "U-Net（编码器预训练）",
+    "task": "分割",
+    "acc": null,
+    "dice": 0.9374,
+    "note": "主模型，迁移学习",
+    "init": "ResNet34 encoder ImageNet 预训练",
+    "split": "固定随机种子 7:2:1，测试集评估",
+    "command": "python training/train_seg_unet.py --images_dir data/pets/images --trimaps_dir data/pets/annotations/trimaps --epochs 30 --bs 8 --img_size 256 --num_workers 6 --encoder_weights imagenet --out backend/weights/seg_unet.pth",
+    "eval_command": "python training/eval_seg_unet.py --images_dir data/pets/images --trimaps_dir data/pets/annotations/trimaps --ckpt backend/weights/seg_unet.pth --out_dir backend/artifacts/segmentation",
+    "output": "backend/weights/seg_unet.pth; backend/artifacts/segmentation/seg_metrics.json; backend/artifacts/segmentation/seg_curves.json"
+  },
+  {
+    "model": "U-Net（编码器随机初始化）",
+    "task": "分割",
+    "acc": null,
+    "dice": 0.8213,
+    "note": "对比实验，从零训练",
+    "init": "ResNet34 encoder 随机初始化",
+    "split": "与主模型一致：固定随机种子 7:2:1，测试集评估",
+    "command": "python training/train_seg_unet.py --images_dir data/pets/images --trimaps_dir data/pets/annotations/trimaps --epochs 30 --bs 8 --img_size 256 --num_workers 6 --encoder_weights none --out backend/weights/seg_unet_random_init.pth --curves_out backend/artifacts/segmentation/seg_curves_random_init.json",
+    "eval_command": "python training/eval_seg_unet.py --images_dir data/pets/images --trimaps_dir data/pets/annotations/trimaps --ckpt backend/weights/seg_unet_random_init.pth --out_dir backend/artifacts/segmentation/random_init",
+    "output": "backend/weights/seg_unet_random_init.pth; backend/artifacts/segmentation/random_init/seg_metrics.json; backend/artifacts/segmentation/seg_curves_random_init.json"
+  }
+]

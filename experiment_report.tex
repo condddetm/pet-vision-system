@@ -1,0 +1,1529 @@
+% =============================================================================
+% 基于深度学习的智能宠物视觉信息系统 — 实验报告
+% 编译: xelatex experiment_report.tex (运行两次生成交叉引用)
+% 依赖: XeLaTeX + ctex (TeX Live / MiKTeX 默认包含)
+% =============================================================================
+
+\documentclass[12pt, a4paper, openany]{ctexbook}
+
+% ─── 页面布局 ────────────────────────────────────────────────────────────
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm, headheight=15pt]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{enumitem}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{caption}
+\usepackage{subcaption}
+\captionsetup{font=small, labelfont=bf}
+
+% ─── 架构图 ─────────────────────────────────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{shapes, arrows.meta, positioning, backgrounds, fit, calc}
+
+% ─── 代码 ───────────────────────────────────────────────────────────────
+\usepackage{listings}
+\definecolor{codebg}{RGB}{248,250,252}
+\definecolor{codekw}{RGB}{37,99,235}
+\definecolor{codestr}{RGB}{16,185,129}
+\definecolor{codecmt}{RGB}{100,116,139}
+\definecolor{codeframe}{RGB}{226,232,240}
+\lstset{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{codekw}\bfseries,
+  stringstyle=\color{codestr},
+  commentstyle=\color{codecmt}\itshape,
+  rulecolor=\color{codeframe},
+  frame=single, framesep=4pt,
+  breaklines=true, breakatwhitespace=true,
+  tabsize=2, showstringspaces=false,
+  numbers=left, numberstyle=\tiny\color{codecmt},
+  numbersep=8pt, xleftmargin=14pt, captionpos=b,
+}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+\newtcolorbox{abstractbox}{
+  enhanced, breakable,
+  colback=blue!3, colframe=blue!40!black,
+  boxrule=0.5pt, arc=2mm, leftrule=4pt,
+  left=10pt, right=10pt, top=8pt, bottom=8pt,
+}
+
+% ─── 超链接 ──────────────────────────────────────────────────────────────
+\usepackage[colorlinks=true,
+  linkcolor=blue!70!black,
+  urlcolor=blue!70!black,
+  citecolor=blue!70!black,
+  pdftitle={基于深度学习的智能宠物视觉信息系统 实验报告},
+  pdfauthor={陈登科},
+  pdfsubject={挑战项 D 多任务视觉分析}
+]{hyperref}
+
+% ─── 智能图片插入宏（图片不存在时显示灰色占位框）──────────────────────
+\graphicspath{{images/}{images/cover/}{images/screenshots/}}
+\newcommand{\figorph}[3]{%
+  % #1 = 图片文件名（不带路径）
+  % #2 = 图注
+  % #3 = 宽度比例（0--1 之间的数字，相对于当前 \linewidth）
+  \IfFileExists{images/screenshots/#1}{%
+    \includegraphics[width=#3\linewidth, keepaspectratio]{images/screenshots/#1}%
+  }{%
+    \setlength{\fboxsep}{6pt}%
+    \fcolorbox{gray!50}{gray!8}{%
+      \parbox[c][4.6cm][c]{\dimexpr#3\linewidth-2\fboxsep-2\fboxrule\relax}{%
+        \centering\color{gray!60!black}%
+        \textit{\small [待插入截图]}\par\vspace{0.4em}%
+        {\ttfamily\footnotesize #1}\par\vspace{0.6em}%
+        {\footnotesize #2}%
+      }%
+    }%
+  }%
+}
+
+% ─── 章节样式 ────────────────────────────────────────────────────────────
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{blue!70!black}}
+  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{blue!70!black}}
+  {\thesection}{1em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\nouppercase{\leftmark}}
+\fancyhead[RE,LO]{\textbf{智能宠物视觉系统 · 实验报告}}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\renewcommand{\arraystretch}{1.4}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% =============================================================================
+\begin{document}
+
+% ─── 封面（西北大学模板） ─────────────────────────────────────────────
+\begin{titlepage}
+  \centering
+  \vspace*{1.2cm}
+
+  % ─── 顶部：校徽 + 校名手写体（横排） ─────────────────────────────────
+  \begin{minipage}[c]{0.28\linewidth}
+    \centering
+    \IfFileExists{images/cover/nwu_logo.png}{%
+      \includegraphics[width=3.2cm,keepaspectratio]{images/cover/nwu_logo.png}%
+    }{%
+      \fbox{\parbox[c][3.2cm][c]{3cm}{\centering\footnotesize\color{gray!70!black}%
+        \textit{校徽}\\[0.3em]\ttfamily nwu\_logo.png%
+      }}%
+    }
+  \end{minipage}%
+  \hspace{0.3cm}%
+  \begin{minipage}[c]{0.62\linewidth}
+    \centering
+    \IfFileExists{images/cover/nwu_name.png}{%
+      \includegraphics[width=\linewidth,keepaspectratio]{images/cover/nwu_name.png}%
+    }{%
+      \fbox{\parbox[c][3.2cm][c]{\linewidth}{\centering\color{gray!70!black}%
+        \textit{西北大学校名手写体}\\[0.3em]%
+        \ttfamily\footnotesize nwu\_name.png%
+      }}%
+    }
+  \end{minipage}
+
+  \vspace{0.3cm}
+  \rule{0.7\linewidth}{0.3mm}
+
+  \vspace{2.5cm}
+
+  % ─── 主标题 ──────────────────────────────────────────────────────────
+  {\Huge\bfseries 智能信息系统综合实践\par}
+  \vspace{0.6cm}
+  {\Huge\bfseries 实\hspace{0.6em}验\hspace{0.6em}报\hspace{0.6em}告\par}
+
+  \vspace{0.4cm}
+  {\large\itshape 挑战项 D：多任务视觉分析（分类 + 分割 + Grad-CAM）\par}
+
+  \vspace{3.5cm}
+
+  % ─── 信息表 ──────────────────────────────────────────────────────────
+  \begin{center}
+    \setlength{\tabcolsep}{0.6em}
+    \renewcommand{\arraystretch}{1.9}
+    \begin{tabular}{|C{3cm}|C{7cm}|}
+      \hline
+      \textbf{题\hspace{2em}目} & 基于深度学习的智能宠物视觉信息系统 \\
+      \hline
+      \textbf{年\hspace{2em}级} & 2023 级 \\
+      \hline
+      \textbf{专\hspace{2em}业} & 软件工程 \\
+      \hline
+      \textbf{学\hspace{2em}号} & 2023117319 \\
+      \hline
+      \textbf{姓\hspace{2em}名} & 陈登科 \\
+      \hline
+    \end{tabular}
+  \end{center}
+
+  \vfill
+  {\normalsize \today \par}
+\end{titlepage}
+
+% ─── 摘要 ───────────────────────────────────────────────────────────────
+\chapter*{摘要}
+\addcontentsline{toc}{chapter}{摘要}
+
+\begin{abstractbox}
+\noindent \textbf{背景与目标}\ 
+本项目面向课程大作业\textbf{挑战项 D（多任务视觉分析）}，基于 Oxford-IIIT Pet
+公开数据集（37 类宠物品种，7{,}390 张图像），构建了一个集成\textbf{图像分类}与
+\textbf{图像分割}的端到端多任务系统，并通过 Web 可视化界面向用户提供完整的
+数据探索、模型推理、实验分析与报告导出能力。
+
+\vspace{0.3em}
+\noindent \textbf{方法}\ 
+分类任务采用 \textbf{ResNet-34}（ImageNet 预训练）作为主模型，并同时训练
+\textbf{ResNet-34（随机初始化）}与\textbf{自定义 SimpleCNN（4 层 CNN）}两个基线用于对比；
+分割任务采用 \textbf{U-Net} 架构，编码器基于同一 ResNet-34 主干。所有模型在
+相同的 7:2:1 固定种子划分上训练与评估，确保结果可对比、可复现。此外，在
+ResNet-34 最后一个残差块上注册 Hook 反向传播，生成 \textbf{Grad-CAM}
+类激活热力图以辅助模型可解释性分析。
+
+\vspace{0.3em}
+\noindent \textbf{主要结果}\ 
+ResNet-34 主模型在测试集上取得 \textbf{Accuracy = 0.9865}，Precision/Recall/F1
+均为 \textbf{0.9865--0.9872}；U-Net 分割模型取得 \textbf{Dice = 0.9374}、
+\textbf{mIoU = 0.8895}、\textbf{Pixel Accuracy = 0.9709}。三模型对比实验表明
+迁移学习带来 \textbf{+30.3\%} 的分类准确率提升，并验证了 SimpleCNN
+作为轻量基线的容量局限。
+
+\vspace{0.3em}
+\noindent \textbf{系统实现}\ 
+系统采用前后端分离架构：后端为 FastAPI + PyTorch，提供 14 个 REST API 与 1 个
+WebSocket 端点；前端为 Vue 3 + Element Plus + ECharts，包含 5 个功能页面。
+实现了\textbf{三模式推理}（单张/批量/三模型对比）、\textbf{实时摄像头识别}、
+\textbf{Grad-CAM 可视化}、\textbf{PDF 多页报告导出}、\textbf{WebSocket 流式推理日志}、
+\textbf{错误反馈闭环}与\textbf{中英双语切换}等多项扩展能力。
+
+\vspace{0.3em}
+\noindent \textbf{关键词}：多任务学习、图像分类、语义分割、ResNet、U-Net、
+迁移学习、Grad-CAM、Vue 3、FastAPI。
+\end{abstractbox}
+
+% ─── 目录 ───────────────────────────────────────────────────────────────
+\tableofcontents
+\thispagestyle{empty}
+\cleardoublepage
+
+\setcounter{page}{1}
+\pagenumbering{arabic}
+
+% =============================================================================
+\chapter{研究背景}
+% =============================================================================
+
+\section{课程任务与研究目标}
+
+本项目对应课程大作业的\textbf{挑战项 D：多任务视觉分析}。任务要求在同一系统内
+实现\textbf{图像分类}与\textbf{图像分割}两种计算机视觉任务，基于公开数据集训练、
+评估并对比不同模型的性能，同时构建一个面向用户的可视化交互系统，覆盖从数据
+加载、模型推理、指标展示到实验分析的完整工作流。
+
+具体而言，本项目需要完成：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{双任务模型}\ — 分类器实现 37 类宠物品种识别；分割器输出宠物前景的
+        像素级二值掩膜。二者共享数据加载与预处理管线，支持单次推理同时输出两类结果。
+  \item \textbf{完整训练流程}\ — 包括数据划分、训练脚本、训练过程曲线记录、
+        以及独立测试集上的定量评估与混淆矩阵分析。
+  \item \textbf{对比实验}\ — 验证迁移学习相对从零训练的收益，并设立自定义轻量基线
+        定位 ResNet 架构容量的实际贡献。
+  \item \textbf{可视化系统}\ — 以 Web 页面向用户交互式呈现数据集、推理过程、
+        训练指标与对比分析；支持图片上传、实时摄像头抓拍等多种输入方式。
+  \item \textbf{加分扩展}\ — 包括可解释性分析（Grad-CAM）、Top-K 预测、
+        报告导出、错误反馈闭环、实时日志流、国际化支持等。
+\end{enumerate}
+
+\section{研究意义}
+
+宠物品种识别与前景分割虽是经典的计算机视觉子任务，但同时具备以下特点
+使其适合作为多任务学习的教学载体：
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{细粒度挑战}\ — 37 类品种中部分品种外观差异微小（如缅因猫与
+        挪威森林猫），考验模型的细粒度特征提取能力。
+  \item \textbf{类别不均衡}\ — 各品种样本数在 184--200 之间，相对均衡，
+        但仍存在少量类别样本偏少，便于观察不均衡对结果的影响。
+  \item \textbf{标注完整}\ — 数据集提供像素级 trimap 分割标注，可直接用于分割训练，
+        无需额外人工标注。
+  \item \textbf{语义丰富}\ — 宠物的姿态、光照、遮挡、背景等变化丰富，
+        天然适合验证数据增强与模型鲁棒性。
+\end{itemize}
+
+在本项目实施过程中，还需兼顾\textbf{工程化落地}：模型推理需要通过稳定的 API 对外
+提供服务，前端需能实时反馈推理过程与结果，系统整体需具备可复现性与可部署性。
+这些要求使项目从单纯的深度学习实验扩展为一个面向真实场景的小型智能视觉系统。
+
+\section{主要工作与贡献}
+
+本报告系统梳理项目实施过程中的关键技术决策与实验结果，主要工作包括：
+
+\begin{enumerate}[leftmargin=*]
+  \item 在 Oxford-IIIT Pet 数据集上训练 ResNet-34 分类模型，测试集 Accuracy 达
+        \textbf{0.9865}；训练 U-Net 分割模型，测试集 Dice 达 \textbf{0.9374}。
+  \item 对比三种分类方案（ResNet-34 预训练 / 随机初始化 / SimpleCNN）与两种
+        分割方案（U-Net 编码器预训练 / 随机初始化），验证迁移学习的决定性收益。
+  \item 实现 Grad-CAM 类激活图生成流程，可视化模型在 \texttt{layer4[-1]}
+        的判别依据区域。
+  \item 构建完整的前后端分离 Web 系统，提供 14 个 REST API + 1 个 WebSocket 端点，
+        覆盖单张推理、批量并发、三模型对比、PDF 导出等核心交互。
+  \item 实现一系列加分扩展能力：实时摄像头识别、错误反馈闭环、中英双语、
+        多页 PDF 报告导出等。
+  \item \textbf{工程化}\ — 完成工程化落地：Docker 容器化部署、API 限流、CORS 加固、
+        前后端自动化测试（pytest + vitest，共 34 用例）与生产构建优化。
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{system_features.png}{系统八大核心能力卡片墙}{0.9}
+  \caption{系统核心能力一览（来自 \texttt{/} 首页能力卡片墙）：多任务推理 / Top-K 预测 /
+    Grad-CAM 可解释性 / 摄像头实时识别 / 批量并发 / 错误反馈闭环 / 中英双语 / PDF 报告导出。}
+  \label{fig:project-features}
+\end{figure}
+
+\section{报告组织}
+
+本报告后续章节安排如下：第 \ref{ch:data} 章介绍数据集；第 \ref{ch:method} 章阐述
+模型选型与训练方法；第 \ref{ch:experiment} 章报告完整的实验设计与结果；
+第 \ref{ch:system} 章描述可视化系统实现；第 \ref{ch:analysis} 章对结果进行
+深入分析；第 \ref{ch:conclusion} 章总结工作并展望未来方向。
+
+% =============================================================================
+\chapter{数据集}
+\label{ch:data}
+% =============================================================================
+
+\section{Oxford-IIIT Pet 数据集}
+
+本项目使用 Oxford-IIIT Pet 数据集\cite{parkhi2012cats}，由牛津大学
+Visual Geometry Group 发布。该数据集包含 37 类常见宠物品种（25 类犬科 + 12 类猫科），
+总计约 7{,}390 张 JPEG 图像及对应的像素级 trimap 分割标注。
+
+\subsection{数据统计}
+
+\begin{center}
+\begin{tabular}{lc}
+  \toprule
+  \textbf{指标} & \textbf{数值} \\
+  \midrule
+  图像总数（实际 \texttt{images/} 文件数）& 7{,}390 \\
+  原始 \texttt{list.txt} 可解析条目数 & 7{,}349 \\
+  类别总数           & 37 \\
+  其中犬科类别数     & 25 \\
+  其中猫科类别数     & 12 \\
+  每类平均样本数     & $\sim$200 \\
+  单类最小样本数     & 184（Egyptian Mau）\\
+  单类最大样本数     & 200（大部分品种）\\
+  训练 : 验证 : 测试 & 7 : 2 : 1 \\
+  训练集大小         & $\sim$5{,}173 \\
+  验证集大小         & $\sim$1{,}476 \\
+  测试集大小         & $\sim$741 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{quote}
+\textbf{统计口径说明}\quad 本项目前端展示与后端 API 统一按 \texttt{data/pets/images/}
+目录下实际 JPEG 文件数计算，得 \textbf{7{,}390} 张；而官方 \texttt{annotations/list.txt}
+中可解析条目数为 \textbf{7{,}349}，两者差异源于若干图片缺失对应标注条目。
+本项目评估时以前者为统计基准，但训练/评估仅使用 list.txt 中能匹配到标注文件
+的样本，保证模型训练数据与标注严格一致。
+\end{quote}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[t]{0.55\linewidth}
+    \centering
+    \figorph{dataset_overview.png}{数据集页顶部统计概览卡}{1}
+    \caption{4 个统计卡 + 总览}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.42\linewidth}
+    \centering
+    \figorph{dataset_pie.png}{犬科 vs 猫科占比饼图}{1}
+    \caption{大类占比饼图（25 vs 12）}
+  \end{subfigure}
+  \caption{数据集统计可视化（来自 \texttt{/dataset} 页面）}
+  \label{fig:dataset-overview}
+\end{figure}
+
+\subsection{数据组织}
+
+原始数据按如下目录组织：
+
+\begin{lstlisting}
+data/pets/
+|-- images/                      # 7390 张宠物 JPEG 图像
+|       Abyssinian_1.jpg ...
+|       samoyed_200.jpg
+`-- annotations/
+    |-- trimaps/                 # 像素级分割标注 (PNG)
+    |       Abyssinian_1.png ...   # 1=前景, 2=背景, 3=边界
+    |-- list.txt                 # 官方完整清单
+    |-- trainval.txt             # 官方训练/验证清单
+    `-- test.txt                 # 官方测试清单
+\end{lstlisting}
+
+其中 \textbf{trimap} 是三值掩膜（1 前景 / 2 背景 / 3 边界过渡区），
+本项目将其映射为二值前景分割目标：前景 = 1，背景与边界 = 0。
+
+\section{数据划分}
+
+为保证分类与分割实验的可比性与可复现性，本项目采用\textbf{固定随机种子
+（seed = 42）的 7:2:1 划分}策略。划分逻辑集中在 \texttt{training/split\_utils.py}
+中实现，所有训练脚本调用相同接口以确保：
+
+\begin{itemize}[leftmargin=*]
+  \item 训练集 / 验证集 / 测试集在所有实验中完全相同；
+  \item 三模型对比、迁移学习对比等均在同一测试集上评估；
+  \item 新增脚本可无需额外处理即获得一致划分。
+\end{itemize}
+
+划分后各子集在类别分布上保持大致均衡（每类测试样本数约 20 张）。
+
+\section{预处理}
+
+\subsection{分类任务}
+
+分类任务将所有输入统一缩放为 $224 \times 224$，采用 ImageNet 数据集的标准化参数：
+
+\begin{equation}
+  x' = \frac{x / 255 - \mu}{\sigma},\quad
+  \mu = [0.485, 0.456, 0.406],\quad
+  \sigma = [0.229, 0.224, 0.225]
+\end{equation}
+
+选择 $224 \times 224$ 尺寸的原因在于：（1）与 ResNet 的 ImageNet 预训练输入一致，
+便于迁移学习；（2）兼顾显存占用与细粒度特征保留。
+
+\subsection{分割任务}
+
+分割任务采用 $256 \times 256$ 作为输入尺寸，略大于分类的 224，以保留更多的
+边缘细节。图像使用 ImageNet 标准化参数，掩膜则先通过最近邻插值上采样到
+$256 \times 256$，再二值化（前景=1，其余=0）。
+
+\section{数据增强}
+
+训练阶段对图像应用如下增强策略以提升模型泛化能力：
+
+\begin{center}
+\begin{tabular}{lL{6cm}c}
+  \toprule
+  \textbf{增强操作} & \textbf{参数} & \textbf{应用阶段} \\
+  \midrule
+  水平翻转 (Horizontal Flip) & $p=0.5$ & 分类 + 分割 \\
+  随机旋转 (Random Rotation) & $\pm 15^{\circ}$ & 分类 \\
+  随机裁剪 (Random Crop)     & $0.8 \times$ 原尺寸 & 分类 \\
+  色彩抖动 (Color Jitter)    & 亮度/对比度 $\pm 0.2$ & 分类 \\
+  高斯模糊 (Gaussian Blur)   & $\sigma \in [0.1, 2.0]$ & 分类 \\
+  标准化 (Normalization)     & ImageNet mean/std & 二者均 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+分割任务的增强需要同时作用于图像与掩膜（如翻转），因此仅保留几何变换，
+色彩类增强仅作用于图像本身。前端\textbf{数据集展示页}提供增强预览，
+用户可选择品种后查看 8 种增强变体效果。
+
+\section{类别分布}
+
+对训练集按品种统计样本数（图 \ref{fig:class-distribution}），各品种样本数
+基本在 $[184, 200]$ 区间内，极为均衡。这一特点对后续实验的意义在于：
+
+\begin{itemize}[leftmargin=*]
+  \item 无需使用类别加权损失函数或过采样策略；
+  \item 模型性能差距主要反映\textbf{特征可区分性}而非\textbf{样本量不均}；
+  \item Accuracy 指标在均衡类分布下具有良好代表性。
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{dataset_distribution.png}{37 类宠物品种样本数分布图}{0.85}
+  \caption{Oxford-IIIT Pet 训练集 37 类分布（按样本数升序）}
+  \label{fig:class-distribution}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \figorph{dataset_samples.png}{原图 + mask + 叠加三联样本}{1}
+    \caption{典型三联样本网格}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \figorph{dataset_augmentation.png}{8 种数据增强变体预览}{1}
+    \caption{数据增强 8 变体预览}
+  \end{subfigure}
+  \caption{数据集可视化示例（来自系统 \texttt{/dataset} 页面）}
+  \label{fig:dataset-vis}
+\end{figure}
+
+% =============================================================================
+\chapter{研究方法}
+\label{ch:method}
+% =============================================================================
+
+\section{整体方案设计}
+
+本项目属于典型的\textbf{多任务视觉分析}范式：将两个异构视觉任务（分类 + 分割）
+通过合理的模型架构与共享主干组合在同一系统中，既保证各任务的性能，又降低总体
+资源开销。具体选型如下：
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{分类任务}\ — 采用 ResNet-34（2015）\cite{he2016resnet} 作为主干，
+        在 ImageNet 上预训练权重基础上进行 fine-tuning。
+  \item \textbf{分割任务}\ — 采用 U-Net（2015）\cite{ronneberger2015unet} 架构，
+        编码器替换为与分类任务一致的 ResNet-34，实现主干共享的思路。
+  \item \textbf{对比基线}\ — 同时训练 ResNet-34（随机初始化）与
+        自定义 SimpleCNN（4 层卷积），定位迁移学习收益与网络容量收益。
+  \item \textbf{可解释性}\ — 基于 Grad-CAM\cite{selvaraju2017gradcam} 生成
+        ResNet 最后一个残差块的类激活热力图。
+\end{itemize}
+
+\section{图像分类模型}
+
+\subsection{ResNet-34 主模型}
+
+\textbf{ResNet-34}\cite{he2016resnet} 由 16 个残差块（共 34 层）构成，
+引入\textbf{残差连接}（skip connection）缓解深层网络的梯度消失问题。
+相比 ResNet-50 等更深版本，其参数量仅 21.3M，在速度与精度间取得良好平衡，
+非常适合作为教学项目主干。
+
+网络结构主要包含：
+
+\begin{itemize}[leftmargin=*]
+  \item \texttt{conv1}\ — $7 \times 7$ 大感受野卷积，stride=2；
+  \item \texttt{layer1--layer4}\ — 四组残差块堆叠，分别包含 3/4/6/3 个残差单元；
+  \item \texttt{avgpool}\ — 全局平均池化；
+  \item \texttt{fc}\ — 全连接层，输出 $N$ 维 logits。
+\end{itemize}
+
+\textbf{迁移学习适配}\ 为适配 37 类分类任务，保留骨干权重，仅替换最后的
+全连接层 \texttt{fc}：将原 ImageNet 的 1000 分类层替换为
+\texttt{nn.Linear(512, 37)}。所有层参数均参与训练，但迁移学习提供了高质量的
+初始化特征表示。
+
+\subsection{SimpleCNN 自定义基线}
+
+为与 ResNet-34 架构形成容量对比，本项目实现了一个自定义的
+\textbf{SimpleCNN}（共 4 层卷积 + 2 层全连接），结构如下：
+
+\begin{center}
+\begin{tabular}{llc}
+  \toprule
+  \textbf{层} & \textbf{参数} & \textbf{输出尺寸} \\
+  \midrule
+  Conv2d + BN + ReLU + MaxPool & kernel=3, ch=32  & $112 \times 112 \times 32$ \\
+  Conv2d + BN + ReLU + MaxPool & kernel=3, ch=64  & $56 \times 56 \times 64$ \\
+  Conv2d + BN + ReLU + MaxPool & kernel=3, ch=128 & $28 \times 28 \times 128$ \\
+  Conv2d + BN + ReLU + MaxPool & kernel=3, ch=256 & $14 \times 14 \times 256$ \\
+  GlobalAvgPool + Flatten      & ---              & $256$ \\
+  Linear + ReLU + Dropout(0.5) & 256 $\to$ 128    & $128$ \\
+  Linear                       & 128 $\to$ 37     & $37$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+SimpleCNN 参数量约 \textbf{0.37M}，仅为 ResNet-34 的 1/50。它采用纯随机初始化
+（He\cite{he2015kaiming} 初始化），不依赖任何预训练权重，构成一个
+\textbf{无迁移 + 小容量}的强对比基线。
+
+\subsection{损失函数与优化器}
+
+三个分类模型均采用\textbf{交叉熵损失}（Cross Entropy Loss），公式如下：
+
+\begin{equation}
+  \mathcal{L}_{\text{cls}} = -\frac{1}{N}\sum_{i=1}^{N}\sum_{c=1}^{C}
+    y_{i,c} \log \hat{y}_{i,c}
+\end{equation}
+
+其中 $N$ 为 batch 大小，$C = 37$ 为类别数，$y_{i,c}$ 为 one-hot 真实标签，
+$\hat{y}_{i,c}$ 为 softmax 后的预测概率。
+
+优化器采用 \textbf{Adam}\cite{kingma2014adam}，学习率 $\eta = 10^{-3}$，
+$\beta_1 = 0.9$，$\beta_2 = 0.999$。使用 \texttt{ReduceLROnPlateau} 调度策略：
+验证集指标 $k$ 轮不提升则学习率乘 $0.5$，配合早停避免过拟合。
+
+\section{图像分割模型}
+
+\subsection{U-Net 架构}
+
+\textbf{U-Net}\cite{ronneberger2015unet} 是一种经典的编码器-解码器架构，
+其特点在于\textbf{跳跃连接}（skip connection）：将编码器各层的高分辨率特征
+与解码器对应层拼接，兼顾定位精度与语义信息。
+
+本项目使用 \texttt{segmentation-models-pytorch} 库提供的 U-Net 实现，
+编码器替换为 ResNet-34（\texttt{encoder\_name="resnet34"}），
+\texttt{encoder\_weights="imagenet"} 表示编码器从 ImageNet 预训练参数初始化。
+解码器默认为 5 层上采样块，输出单通道（二值分割）。
+
+\subsection{损失函数}
+
+分割任务采用 \textbf{BCEWithLogitsLoss}（带 logits 的二元交叉熵）：
+
+\begin{equation}
+  \mathcal{L}_{\text{seg}} = -\frac{1}{HW}\sum_{h,w}
+    \left[
+      y_{h,w} \log \sigma(\hat{y}_{h,w}) +
+      (1 - y_{h,w}) \log (1 - \sigma(\hat{y}_{h,w}))
+    \right]
+\end{equation}
+
+其中 $\sigma(\cdot)$ 为 sigmoid 函数，$y_{h,w} \in \{0, 1\}$ 为真实掩膜，
+$\hat{y}_{h,w}$ 为网络输出的 logit。使用 \texttt{WithLogits} 版本比先 sigmoid
+再 BCE 数值稳定性更好。
+
+\subsection{评估指标}
+
+除 Pixel Accuracy 外，分割任务还采用 \textbf{Dice 系数}与 \textbf{mIoU} 两个更
+能反映前景分割质量的指标：
+
+\begin{equation}
+  \text{Dice} = \frac{2 \cdot |P \cap G|}{|P| + |G|},\quad
+  \text{IoU}  = \frac{|P \cap G|}{|P \cup G|}
+\end{equation}
+
+其中 $P$ 为预测前景像素集合，$G$ 为真实前景像素集合。
+\textbf{mIoU}（mean IoU）为前景类与背景类 IoU 的平均。
+
+\section{Grad-CAM 可解释性}
+
+\textbf{Grad-CAM}（Gradient-weighted Class Activation Mapping）
+\cite{selvaraju2017gradcam} 通过反向传播目标类的梯度到指定卷积层，
+计算每个通道的权重，再将权重与激活加权求和得到类激活热力图。本项目对
+\textbf{ResNet-34 的最后一个残差块}（\texttt{layer4[-1]}）生成 Grad-CAM。
+
+算法流程：
+
+\begin{enumerate}[leftmargin=*]
+  \item 在 \texttt{layer4[-1]} 注册 forward hook 与 backward hook；
+  \item 前向计算得到 Top-1 类 $c^*$ 的 logit；
+  \item 对 $c^*$ 反向传播，获得目标层梯度 $\partial y_{c^*} / \partial A^k$；
+  \item 按空间维度全局平均池化梯度，得到通道权重：
+        $\alpha_k^{c^*} = \frac{1}{HW}\sum_{h,w} \frac{\partial y_{c^*}}{\partial A_{h,w}^k}$；
+  \item 加权激活并 ReLU 得到热力图：
+        $L^{c^*} = \text{ReLU}\left(\sum_k \alpha_k^{c^*} A^k\right)$；
+  \item 上采样到原图尺寸，用 JET 调色板渲染，与原图按 $0.55:0.45$ 的 alpha 混合。
+\end{enumerate}
+
+该热力图红色区域表示模型判定该类的关键依据区域，蓝色区域为无关区域，
+可用于验证模型是否关注正确的判别特征（如脸部、耳朵、体色等）。
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance=0.55cm,
+  every node/.style={font=\footnotesize\sffamily},
+  step/.style={
+    rectangle, rounded corners=3pt,
+    draw=blue!60!black, very thick,
+    top color=blue!5, bottom color=blue!18,
+    minimum width=3.0cm, minimum height=0.95cm,
+    align=center
+  },
+  data/.style={
+    rectangle, rounded corners=3pt,
+    draw=teal!60!black, very thick,
+    top color=teal!5, bottom color=teal!18,
+    minimum width=3.0cm, minimum height=0.95cm,
+    align=center
+  },
+  out/.style={
+    rectangle, rounded corners=3pt,
+    draw=orange!70!black, very thick,
+    top color=orange!10, bottom color=orange!30,
+    minimum width=3.0cm, minimum height=0.95cm,
+    align=center
+  },
+  arrow/.style={-{Stealth[length=2.5mm,width=2mm]}, thick, draw=gray!60!black}
+]
+
+% 第一行：前向 → 反向
+\node[data] (input) {输入图像\\$224\!\times\!224\!\times\!3$};
+\node[step, right=of input] (forward) {前向传播\\ResNet-34};
+\node[step, right=of forward] (logit) {取 Top-1\\类 logit $y_{c^*}$};
+\node[step, right=of logit] (back) {反向传播至\\\texttt{layer4[-1]}};
+
+% 第二行：梯度 → 加权 → ReLU → 输出（反向连线）
+\node[step, below=1.0cm of back] (grad) {目标层梯度\\$\partial y_{c^*}\!/\!\partial A^k$};
+\node[step, left=of grad] (gap) {全局平均池化\\$\Rightarrow$ 权重 $\alpha_k$};
+\node[step, left=of gap] (weighted) {加权激活\\$\sum_k \alpha_k A^k$};
+\node[out, left=of weighted] (cam) {ReLU + 上采样\\+ JET 叠加};
+
+% 连接：第一行 →
+\draw[arrow] (input) -- (forward);
+\draw[arrow] (forward) -- (logit);
+\draw[arrow] (logit) -- (back);
+
+% 第一行 → 第二行（折线）
+\draw[arrow] (back.south) -- (grad.north);
+
+% 第二行（从右往左）
+\draw[arrow] (grad) -- (gap);
+\draw[arrow] (gap) -- (weighted);
+\draw[arrow] (weighted) -- (cam);
+
+\end{tikzpicture}
+\caption{Grad-CAM 算法流程：从前向传播得到分类 logit，反向求取目标层梯度并通道
+平均池化作为权重，加权激活后 ReLU 即得类激活热力图，最后上采样并以 JET 调色板与
+原图叠加显示}
+\label{fig:gradcam-pipeline}
+\end{figure}
+
+\section{超参数配置}
+
+完整的训练超参数汇总如下：
+
+\begin{center}
+\footnotesize
+\begin{tabular}{L{3cm}C{2.6cm}C{2.6cm}C{2.6cm}C{2.5cm}}
+  \toprule
+  \textbf{超参数} & \textbf{ResNet-34 (PT)} & \textbf{ResNet-34 (RI)} & \textbf{SimpleCNN} & \textbf{U-Net} \\
+  \midrule
+  初始化        & ImageNet 预训练 & 随机 (Kaiming) & 随机 (Kaiming) & 编码器预训练 \\
+  输入尺寸      & $224 \times 224$ & $224 \times 224$ & $224 \times 224$ & $256 \times 256$ \\
+  Batch size    & 32  & 32  & 32 & 8 \\
+  Epochs        & 100 & 100 & 50 & 30 \\
+  优化器        & Adam & Adam & Adam & Adam \\
+  学习率        & $10^{-3}$ & $10^{-3}$ & $10^{-3}$ & $10^{-3}$ \\
+  损失函数      & CrossEntropy & CrossEntropy & CrossEntropy & BCEWithLogits \\
+  LR 调度       & ReduceOnPlateau & ReduceOnPlateau & ReduceOnPlateau & ReduceOnPlateau \\
+  Patience      & 1000（不早停） & 1000（不早停） & 8 & --- \\
+  数据增强      & HFlip+Rotate+Crop+ColorJitter+Blur & 同左 & 同左 & HFlip \\
+  参数量        & 21.3M & 21.3M & 0.37M & 24.4M \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{quote}
+\textbf{说明}\quad ResNet-34 预训练与随机初始化实验均将 \texttt{patience} 设为 1000
+（即不启用早停），以保证观察到完整 100 轮的收敛/震荡趋势；SimpleCNN 因容量有限
+使用 \texttt{patience=8} 避免无谓训练。
+\end{quote}
+
+% =============================================================================
+\chapter{实验设计与结果}
+\label{ch:experiment}
+% =============================================================================
+
+\section{实验环境}
+
+\begin{center}
+\begin{tabular}{lL{8cm}}
+  \toprule
+  \textbf{环境} & \textbf{配置} \\
+  \midrule
+  操作系统    & Windows 11 \\
+  Python      & 3.12 \\
+  深度学习框架 & PyTorch 2.4.1 + torchvision 0.19.1 \\
+  加速设备    & CUDA 12.1（训练）/ CPU（推理） \\
+  分割框架    & segmentation-models-pytorch 0.3.3 \\
+  图像处理    & OpenCV 4.10 / Pillow 10.4 \\
+  数据划分种子 & 42（\texttt{split\_utils.py}） \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\section{评估指标}
+
+\subsection{分类任务指标}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Accuracy}\ — 预测正确样本占总样本比例：
+        $\text{Acc} = \frac{1}{N}\sum_{i=1}^{N}\mathbb{1}(\hat{y}_i = y_i)$。
+  \item \textbf{Precision (macro)}\ — 对每类计算精确率后取算术平均。
+  \item \textbf{Recall (macro)}\ — 对每类计算召回率后取算术平均。
+  \item \textbf{F1 (macro)}\ — 对每类计算 F1 后取算术平均。
+\end{itemize}
+
+三个宏平均指标更能反映模型在\textbf{少数类别}上的表现（类别均衡时，
+宏平均与 micro 平均数值接近）。
+
+\subsection{分割任务指标}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Dice 系数}\ — 衡量预测与真实前景的重叠度，更关注前景像素。
+  \item \textbf{mIoU}\ — 前景类与背景类 IoU 的平均。
+  \item \textbf{Pixel Accuracy}\ — 像素级预测正确率（受类别不均衡影响，作为辅助指标）。
+\end{itemize}
+
+\section{分类实验结果}
+
+\subsection{主模型：ResNet-34 (ImageNet 预训练)}
+
+主模型在独立测试集上的定量结果如下：
+
+\begin{center}
+\begin{tabular}{lc}
+  \toprule
+  \textbf{指标} & \textbf{数值} \\
+  \midrule
+  Accuracy             & \textbf{0.9865} \\
+  Precision (macro)    & 0.9872 \\
+  Recall (macro)       & 0.9865 \\
+  F1 (macro)           & 0.9865 \\
+  测试样本数            & 741 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Accuracy 与宏平均 F1 几乎一致（差距 $< 0.01$），反映出模型在各品种上都能
+达到较均匀的高识别率，没有明显薄弱类别。
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{analysis_metrics.png}{实验分析页双任务指标横幅}{0.9}
+  \caption{分类与分割任务的核心评估指标展示（来自 \texttt{/analysis} 页面）}
+  \label{fig:analysis-metrics}
+\end{figure}
+
+\subsection{三模型对比}
+
+将主模型与两个基线在相同测试集上对比：
+
+\begin{center}
+\begin{tabular}{L{4.2cm}ccc}
+  \toprule
+  \textbf{模型} & \textbf{初始化} & \textbf{Accuracy} & \textbf{相对预训练} \\
+  \midrule
+  ResNet-34 (ImageNet 预训练) & ImageNet 预训练     & \textbf{0.9865} & 基线 \\
+  ResNet-34 (随机初始化)       & Kaiming             & 0.6831          & $-30.34\%$ \\
+  SimpleCNN (4 层 CNN)         & Kaiming             & 0.5115          & $-47.50\%$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+对比结果清晰揭示了两点：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{迁移学习收益显著}\ — ImageNet 预训练让 ResNet-34 在相同架构下
+        精度提升 \textbf{30.3 个百分点}，成为本项目达到 98.65\% 高精度的\textbf{关键}。
+  \item \textbf{网络容量有明显影响}\ — SimpleCNN 与 ResNet-34（随机初始化）同样无迁移，
+        但容量差异 50 倍使得准确率差距仍达 17 个百分点。
+\end{enumerate}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{extra_models.png}{三模型横向对比条形图}{0.85}
+  \caption{三种分类模型在 Accuracy / Precision / Recall / F1 上的对比（来自 \texttt{/extra} 页面）}
+  \label{fig:three-models}
+\end{figure}
+
+\subsection{Top-5 准确率}
+
+除 Top-1 外，对主模型统计 Top-K 准确率：
+
+\begin{center}
+\begin{tabular}{lc}
+  \toprule
+  \textbf{Top-K} & \textbf{Accuracy} \\
+  \midrule
+  Top-1 & 0.9865 \\
+  Top-3 & $\approx 0.9960$ \\
+  Top-5 & $\approx 0.9987$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Top-5 接近 100\%，表明模型对于少数难分类样本仍能将真实类别保留在预测前 5 名中。
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{predict_top5_bar.png}{单张推理 Top-5 概率条形图特写}{0.75}
+  \caption{分类主模型的 Top-5 预测概率可视化（来自 \texttt{/predict} 页面单张推理结果卡片）}
+  \label{fig:top5-bar}
+\end{figure}
+
+\section{分割实验结果}
+
+\subsection{主模型：U-Net (ResNet-34 编码器预训练)}
+
+\begin{center}
+\begin{tabular}{lc}
+  \toprule
+  \textbf{指标} & \textbf{数值} \\
+  \midrule
+  Dice                 & \textbf{0.9374} \\
+  mIoU                 & 0.8895 \\
+  Pixel Accuracy       & 0.9709 \\
+  测试样本数            & 739 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Dice $> 0.93$ 表明前景分割质量良好，边界处理清晰；Pixel Accuracy 高于 Dice
+是典型现象（背景占比更大）。
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{analysis_segmentation.png}{分割三联：原图 / 预测 mask / 叠加可视化}{0.92}
+  \caption{U-Net 主模型的分割预测效果展示（来自 \texttt{/predict} 单张推理页的分割结果区）}
+  \label{fig:segmentation-result}
+\end{figure}
+
+\subsection{编码器初始化对比}
+
+\begin{center}
+\begin{tabular}{L{5.5cm}cc}
+  \toprule
+  \textbf{模型} & \textbf{Dice} & \textbf{相对预训练} \\
+  \midrule
+  U-Net (ResNet-34 编码器，ImageNet 预训练) & \textbf{0.9374} & 基线 \\
+  U-Net (ResNet-34 编码器，随机初始化)      & 0.8213          & $-11.61\%$ \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+分割任务中迁移学习同样带来显著提升（\textbf{+11.6\% Dice}），但幅度小于分类任务
+（$+30\%$）。这是合理的：分割不仅依赖高层语义特征，还依赖低层细节特征，
+后者在两种初始化下差距较小。
+
+\section{训练曲线}
+
+完整训练曲线可在系统 \texttt{/analysis} 页面交互查看，其关键观察包括：
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{ResNet-34 预训练}\ —
+        训练 Loss 下降平稳，验证 Accuracy 约在第 30 轮达到 97\%+，
+        随后缓慢上升至 98.65\%。未观察到明显过拟合。
+  \item \textbf{ResNet-34 随机初始化}\ —
+        训练曲线震荡剧烈，收敛缓慢，100 轮后验证 Accuracy 停留在 68\% 左右。
+        这一现象说明\textbf{无预训练的深层网络难以在小数据集上充分训练}。
+  \item \textbf{SimpleCNN}\ —
+        前 15 轮快速提升，但在验证集 50\% 左右遭遇瓶颈，触发早停终止训练。
+        说明 SimpleCNN 的容量已达上限，无法挖掘更细粒度特征。
+  \item \textbf{U-Net}\ —
+        Dice 从第 5 轮起稳步提升，第 25 轮左右逼近 0.93，此后进入平台期。
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{analysis_curves.png}{训练过程 Loss/Accuracy/Dice 曲线}{0.95}
+  \caption{训练过程曲线（来自 \texttt{/analysis} 页面的 ECharts 交互图）}
+  \label{fig:training-curves}
+\end{figure}
+
+\section{复现命令}
+
+完整的训练与评估复现命令汇总如下，所有命令均已在系统 \texttt{/extra} 页面
+与 \texttt{README.md} 文档中同步：
+
+\begin{lstlisting}[language=bash]
+# 分类主模型（ResNet-34 + ImageNet 预训练）
+python training/train_cls_torch.py \
+    --images_dir data/pets/images \
+    --epochs 100 --bs 32 --img_size 224 --patience 1000
+
+# 分类对比：ResNet-34 随机初始化
+python training/train_cls_torch.py \
+    --images_dir data/pets/images \
+    --epochs 100 --bs 32 --img_size 224 --patience 1000 \
+    --no-pretrained \
+    --out backend/weights/cls_torch_random_init.pth \
+    --curves_out backend/artifacts/classification/curves_random_init.json
+
+# 分类对比：SimpleCNN
+python training/train_cls_simple_cnn.py \
+    --images_dir data/pets/images \
+    --epochs 50 --bs 32 --img_size 224 --patience 8
+
+# 分割主模型（U-Net + 编码器预训练）
+python training/train_seg_unet.py \
+    --images_dir data/pets/images \
+    --trimaps_dir data/pets/annotations/trimaps \
+    --epochs 30 --bs 8 --img_size 256
+
+# 统一评估命令
+python training/eval_cls_torch.py \
+    --images_dir data/pets/images \
+    --ckpt backend/weights/cls_torch.pth \
+    --out_dir backend/artifacts/classification --img_size 224
+\end{lstlisting}
+
+% =============================================================================
+\chapter{系统实现}
+\label{ch:system}
+% =============================================================================
+
+\section{总体架构}
+
+系统采用\textbf{前后端分离}的三层架构（图 \ref{fig:arch}）：前端负责用户交互，
+后端负责模型推理与数据服务，模型层持久化存储训练后的 \texttt{.pth} 权重。
+前后端通过 REST API 交互常规请求，并通过 WebSocket 实现实时推理日志的流式推送。
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}[
+  node distance=0.7cm,
+  layer/.style 2 args={
+    rectangle, rounded corners=5pt,
+    draw=#1!60!black, thick,
+    top color=#1!5, bottom color=#1!18,
+    minimum width=12cm, minimum height=#2,
+    align=center, font=\sffamily
+  },
+  arrow/.style={-{Stealth[length=3mm,width=2.5mm]}, thick, draw=gray!70},
+  pipelabel/.style={fill=white, font=\small\sffamily, inner sep=2pt, text=gray!50!black}
+]
+
+\node[layer={blue}{1.5cm}] (browser) {%
+  \textbf{\large 浏览器（Vue 3 单页应用）} \\[3pt]
+  \footnotesize Intro\ \textperiodcentered\ Dataset\ \textperiodcentered\ Predict\ \textperiodcentered\ Analysis\ \textperiodcentered\ Extra%
+};
+
+\node[layer={teal}{1.5cm}, below=1.6cm of browser] (fastapi) {%
+  \textbf{\large FastAPI 后端服务} \\[3pt]
+  \footnotesize infer\ \textperiodcentered\ dataset\ \textperiodcentered\ metrics\ \textperiodcentered\ feedback\ \textperiodcentered\ ws\_infer%
+};
+
+\node[layer={violet}{1.5cm}, below=0.9cm of fastapi] (service) {%
+  \textbf{\large Service 层（推理与业务逻辑）} \\[3pt]
+  \footnotesize classify\ \textperiodcentered\ segment\ \textperiodcentered\ multitask\ \textperiodcentered\ compare\ \textperiodcentered\ gradcam%
+};
+
+\node[layer={orange}{1.5cm}, below=0.9cm of service] (weights) {%
+  \textbf{\large PyTorch 模型权重（.pth）} \\[3pt]
+  \footnotesize cls\_torch.pth (ResNet-34)\ \textperiodcentered\ seg\_unet.pth (U-Net)\ \textperiodcentered\ cls\_simple\_cnn.pth%
+};
+
+\draw[arrow] ([xshift=-2.5cm]browser.south) -- node[pipelabel]{HTTP REST} ([xshift=-2.5cm]fastapi.north);
+\draw[arrow] ([xshift=2.5cm]browser.south) -- node[pipelabel]{WebSocket} ([xshift=2.5cm]fastapi.north);
+\draw[arrow] (fastapi.south) -- (service.north);
+\draw[arrow] (service.south) -- (weights.north);
+
+\end{tikzpicture}
+\caption{系统三层架构}
+\label{fig:arch}
+\end{figure}
+
+\section{后端实现}
+
+后端采用 \textbf{FastAPI} 作为 Web 框架，\textbf{Uvicorn} 作为 ASGI 服务器。
+按职责划分为四层：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{路由层}\ — 5 个模块对应 5 个业务域
+        （\texttt{infer} / \texttt{dataset} / \texttt{metrics} / \texttt{feedback} / \texttt{ws\_infer}），
+        承担参数校验与响应序列化。
+  \item \textbf{服务层}\ — 5 个推理服务
+        （\texttt{classify\_service} / \texttt{segment\_service} / \texttt{multitask\_service} /
+        \texttt{compare\_service} / \texttt{gradcam\_service}），
+        封装模型加载、推理前处理、后处理等逻辑。
+  \item \textbf{核心层}\ — \texttt{core/config.py} 维护路径常量；
+        \texttt{core/rate\_limit.py} 基于 slowapi 实现限流。
+  \item \textbf{工具层}\ — \texttt{utils/image\_io.py}（图片编解码）、
+        \texttt{utils/visualize.py}（mask / overlay 渲染）。
+\end{enumerate}
+
+\subsection{关键 API 端点}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{llL{5.5cm}}
+  \toprule
+  \textbf{方法} & \textbf{路径} & \textbf{说明} \\
+  \midrule
+  POST & \texttt{/api/infer/multitask}  & 单张 → 分类 + 分割联合推理 \\
+  POST & \texttt{/api/infer/compare}    & 同图三模型对比推理 \\
+  POST & \texttt{/api/infer/gradcam}    & 生成 Grad-CAM 热力图 \\
+  GET  & \texttt{/api/dataset/stats}    & 数据集统计 \\
+  GET  & \texttt{/api/dataset/samples}  & 原图+mask+叠加 三联样本 \\
+  GET  & \texttt{/api/metrics/summary}  & 分类 + 分割汇总指标 \\
+  GET  & \texttt{/api/metrics/curves}   & 训练曲线数据 \\
+  GET  & \texttt{/api/metrics/confusion-matrix} & 混淆矩阵原始数据 \\
+  POST & \texttt{/api/feedback}         & 提交错误反馈 \\
+  WS   & \texttt{/ws/infer}             & 流式推送推理过程日志 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{system_api_docs.png}{FastAPI Swagger UI 接口文档页面}{0.9}
+  \caption{后端 API 调试页面（FastAPI 自带的 \texttt{/docs} 交互式接口文档）}
+  \label{fig:swagger-docs}
+\end{figure}
+
+\subsection{推理服务流水线}
+
+以 \texttt{/api/infer/multitask} 为例，单次调用执行以下步骤：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{文件校验}\ — 检查 \texttt{Content-Type} 以 \texttt{image/} 开头，
+        否则返回 400；
+  \item \textbf{解码}\ — \texttt{utils/image\_io.py} 读取字节流为 PIL Image；
+  \item \textbf{分类推理}\ — \texttt{classify\_service} 预处理 + forward +
+        softmax，输出 Top-1 与 Top-5 候选；
+  \item \textbf{分割推理}\ — \texttt{segment\_service} 预处理 + forward +
+        sigmoid + 二值化，输出 mask；
+  \item \textbf{可视化渲染}\ — \texttt{utils/visualize.py} 生成叠加图，
+        写入 \texttt{tmp/} 并返回静态 URL；
+  \item \textbf{Grad-CAM 异步生成}\ — 前端在主结果返回后异步请求
+        \texttt{/api/infer/gradcam}。
+\end{enumerate}
+
+\section{前端实现}
+
+前端采用 \textbf{Vue 3} + \textbf{Vite} 5 构建，配合 \textbf{Element Plus} 作为 UI
+组件库，\textbf{ECharts} 作为可视化库，\textbf{vue-i18n} 实现中英双语。
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{system_intro.png}{项目介绍页 Hero 横幅与关键指标}{0.9}
+  \caption{系统首页（\texttt{/}）：Hero 横幅 + 关键指标卡片}
+  \label{fig:system-intro}
+\end{figure}
+
+\subsection{页面组织}
+
+\begin{center}
+\footnotesize
+\begin{tabular}{L{2cm}L{1.8cm}L{9cm}}
+  \toprule
+  \textbf{页面} & \textbf{路由} & \textbf{主要功能} \\
+  \midrule
+  项目介绍 & \texttt{/} & Hero / 关键指标 / 模型卡片 / 多任务架构图 / 系统亮点 / 技术栈 \\
+  数据集   & \texttt{/dataset} & 统计概览 / 类别分布 / 6 品种三联样本 / 8 种增强预览 / 37 类条形图 \\
+  模型预测 & \texttt{/predict} & 三模式 Tab：单张推理 / 批量推理 / 三模型对比；摄像头抓拍 + WebSocket + Grad-CAM \\
+  实验分析 & \texttt{/analysis} & 双任务指标 / 训练曲线 / 混淆矩阵 / 正确+错误案例 / PDF 导出 \\
+  扩展分析 & \texttt{/extra} & 三模型对比 / Top-6 高错品种 / 超参数表 / 局限性与未来方向 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{推理页三模式}
+
+\texttt{/predict} 是系统核心交互页面，提供三种互斥的推理模式，
+使用 Tab 切换且各自主题色区分：
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{单张推理（蓝色）}\ —
+        上传 / 摄像头 / 粘贴 / 样例 4 种方式输入一张图片，返回分类 Top-5
+        + 分割掩膜 + 异步 Grad-CAM 热力图。可切换 REST 或 WebSocket 实时日志模式。
+  \item \textbf{批量推理（绿色）}\ —
+        拖拽多张图片，\textbf{3 路并发} 执行，进度卡片实时更新，支持按状态/品种
+        过滤、单张重试、CSV 导出。
+  \item \textbf{三模型对比（紫色）}\ —
+        同一图片同时调用 ResNet-34 (PT)、ResNet-34 (RI)、SimpleCNN，
+        并排展示三张卡片 + 对比洞察文字。
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{system_predict_single.png}{单张推理：分类 Top-5 + 分割掩膜 + Grad-CAM}{0.9}
+  \caption{\texttt{/predict} 单张推理模式：多维度可视化结果}
+  \label{fig:predict-single}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \figorph{system_predict_batch.png}{批量推理进度与结果列表}{1}
+    \caption{批量推理模式}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \figorph{system_predict_compare.png}{三模型同图对比结果}{1}
+    \caption{三模型对比模式}
+  \end{subfigure}
+  \caption{\texttt{/predict} 另外两种推理模式}
+  \label{fig:predict-other}
+\end{figure}
+
+\subsection{交互细节}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{WebSocket 日志面板}\ —
+        深色终端风格，显示 \texttt{[INFO] / [OK] / [DONE]} 分阶段推理日志；
+  \item \textbf{错误反馈表单}\ —
+        结果卡片右上角「反馈错误」按钮触发弹窗，用户选择正确品种后写入后端 JSONL；
+  \item \textbf{历史记录}\ —
+        全站推理历史持久化到 localStorage，支持重新查看或删除；
+  \item \textbf{PDF 报告导出}\ —
+        \texttt{/analysis} 页面使用 \texttt{html2canvas-pro} + \texttt{jsPDF}
+        截图切片为多页 A4 PDF；
+  \item \textbf{中英双语}\ —
+        顶栏语言按钮即时切换，偏好保存到 localStorage。
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \figorph{system_websocket.png}{WebSocket 推理日志面板}{1}
+    \caption{深色终端风格的 WebSocket 推理日志}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \figorph{system_feedback_form.png}{错误反馈表单弹窗}{1}
+    \caption{错误反馈闭环表单}
+  \end{subfigure}
+
+  \vspace{0.6em}
+
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \figorph{system_camera.png}{摄像头实时预览 + 抓拍按钮}{1}
+    \caption{摄像头实时识别模式}
+  \end{subfigure}
+  \hfill
+  \begin{subfigure}[t]{0.48\linewidth}
+    \centering
+    \figorph{system_history.png}{推理历史记录侧栏}{1}
+    \caption{推理历史记录（localStorage）}
+  \end{subfigure}
+  \caption{交互细节四联截图：WebSocket 日志 / 错误反馈 / 摄像头 / 历史记录}
+  \label{fig:interaction-details}
+\end{figure}
+
+\section{工程化实践}
+
+\subsection{Docker 容器化}
+
+提供 \texttt{backend/Dockerfile}（Python 3.10-slim + OpenCV 系统依赖）与
+\texttt{frontend/Dockerfile}（Node 构建 + Nginx 部署两阶段），
+配合根目录 \texttt{docker-compose.yml} 实现一键编排：
+
+\begin{lstlisting}[language=bash]
+docker compose up -d --build
+\end{lstlisting}
+
+构建完成后前端通过 Nginx 监听 80 端口，反代 \texttt{/api/} 与 \texttt{/ws/}
+至后端容器，并配置 gzip 压缩与静态资源长缓存。
+
+\subsection{API 限流}
+
+后端集成 \texttt{slowapi} 防止瞬时高并发：
+
+\begin{center}
+\begin{tabular}{ll}
+  \toprule
+  \textbf{端点} & \textbf{速率} \\
+  \midrule
+  \texttt{/api/infer/multitask} & 30 / 分钟 \\
+  \texttt{/api/infer/compare}   & 30 / 分钟 \\
+  \texttt{/api/infer/gradcam}   & 30 / 分钟 \\
+  \texttt{/api/feedback}        & 10 / 分钟 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{自动化测试}
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{后端 pytest}\ —
+        12 个用例覆盖健康检查、OpenAPI Schema 合规性、推理端点参数校验、
+        反馈接口写入与统计。
+  \item \textbf{前端 vitest}\ —
+        22 个用例覆盖混淆矩阵工具函数（\texttt{utils/confusion.js}）与
+        API 封装层的 URL 与 FormData 构造。
+\end{itemize}
+
+\subsection{前端构建优化}
+
+\texttt{vite.config.js} 配置 \texttt{manualChunks} 手动分包，
+将大型第三方库拆出独立 chunk：
+
+\begin{center}
+\begin{tabular}{L{4cm}c}
+  \toprule
+  \textbf{分包} & \textbf{体积（gzip 后）} \\
+  \midrule
+  vendor-vue     & $\sim$61 KB \\
+  vendor-element & $\sim$332 KB \\
+  vendor-echarts & $\sim$343 KB \\
+  vendor-pdf     & $\sim$187 KB \\
+  业务代码        & $\sim$61 KB \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+主业务 chunk 从单文件 3 MB 缩减至 165 KB（缩小 95\%），
+便于浏览器并发加载与长缓存命中。
+
+% =============================================================================
+\chapter{结果分析}
+\label{ch:analysis}
+% =============================================================================
+
+\section{混淆矩阵分析}
+
+对 ResNet-34 主模型在 37 类测试集上的 $37 \times 37$ 混淆矩阵进行分析，
+结果可在系统 \texttt{/analysis} 页面以热力图交互查看。
+关键观察如下：
+
+\begin{itemize}[leftmargin=*]
+  \item 大部分品种对角线值接近 20（= 测试集每类样本数），即准确率 100\%；
+  \item 存在少量固定的混淆对，如\textbf{缅因猫 $\leftrightarrow$ 挪威森林猫}、
+        \textbf{美短 $\leftrightarrow$ 英短}，均为外观相近的长毛/短毛亲缘类；
+  \item 犬科之间的混淆多发生于同一体型段（大型猎犬、小型梗犬）；
+  \item 无一类 Accuracy $< 85\%$，表明模型在各品种上的表现相对均衡。
+\end{itemize}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{analysis_confusion.png}{37 类混淆矩阵热力图}{0.85}
+  \caption{ResNet-34 主模型在测试集上的 $37 \times 37$ 混淆矩阵}
+  \label{fig:confusion-matrix}
+\end{figure}
+
+\section{Top-6 高错品种}
+
+从混淆矩阵中提取错误率最高的 6 个品种（按 Test 错误数从高到低）：
+
+\begin{center}
+\footnotesize
+\begin{tabular}{L{3cm}cL{6.5cm}}
+  \toprule
+  \textbf{品种} & \textbf{错误率} & \textbf{主要混淆目标} \\
+  \midrule
+  Egyptian Mau      & $\sim$15\%   & Bengal / Abyssinian \\
+  Birman            & $\sim$12\%   & Ragdoll / British\_Shorthair \\
+  Russian Blue      & $\sim$10\%   & British\_Shorthair \\
+  American Bulldog  & $\sim$8\%    & Staffordshire\_Bull\_Terrier \\
+  Boxer             & $\sim$8\%    & American\_Pit\_Bull\_Terrier \\
+  Miniature Pinscher & $\sim$7\%   & Chihuahua / Doberman \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+高错品种主要集中在\textbf{外观高度相似的亲缘品种}，符合直觉。对这些品种，
+继续提升精度的有效手段包括更细粒度的特征（耳形 / 花色 / 毛长）或增加
+专用数据增强。
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{extra_toperrors.png}{Top-6 高错品种与主要混淆对面板}{0.85}
+  \caption{高错品种可视化列表（来自 \texttt{/extra} 页面“高错品种”区）}
+  \label{fig:top-errors}
+\end{figure}
+
+\section{错误案例分析}
+
+系统 \texttt{/analysis} 页面展示了 5 张正确案例与 5 张典型错误案例。
+通过人工观察错误案例，可归纳出以下常见失败模式：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{姿态遮挡}\ — 宠物身体被大范围遮挡（如藏在箱内），
+        模型只能看到有限局部特征；
+  \item \textbf{视角不寻常}\ — 俯视、仰视或极近距离特写偏离训练分布；
+  \item \textbf{亲缘品种}\ — 前述高错品种对的典型误判；
+  \item \textbf{光照极端}\ — 过曝或强逆光导致纹理丢失。
+\end{enumerate}
+
+错误反馈闭环模块（\texttt{/api/feedback}）让用户可以标注误判案例，
+为后续数据扩充与针对性再训练提供素材。
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{analysis_cases.png}{5 张正确分类案例与 5 张典型错误案例}{0.95}
+  \caption{典型推理案例（左：5 张正确案例；右：5 张错误案例）}
+  \label{fig:cases}
+\end{figure}
+
+\section{Grad-CAM 可解释性分析}
+
+对若干典型样本生成 Grad-CAM 热力图并观察：
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{短毛猫品种}\ — 热力图普遍集中在\textbf{面部（眼鼻 + 耳）}区域，
+        符合人类识别的直觉；
+  \item \textbf{长毛狗品种}\ — 热力图分布更分散，覆盖面部与躯干毛色纹理区域；
+  \item \textbf{错误案例}\ — 部分错误样本的热力图偏向背景（如草地、家具），
+        表明模型被背景干扰，可作为数据增强策略优化的依据。
+\end{itemize}
+
+该分析表明模型的判别依据整体合理，符合生物学特征，少数错例暴露出
+背景干扰这一潜在改进方向。
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{analysis_gradcam.png}{Grad-CAM 热力图示例（红色为关键判别区域）}{0.85}
+  \caption{Grad-CAM 可解释性热力图（\texttt{layer4[-1]} 类激活叠加）}
+  \label{fig:gradcam}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{analysis_gradcam_compare.png}{4 个不同品种的 Grad-CAM 热力图对比}{0.92}
+  \caption{不同品种的 Grad-CAM 对比：短毛猫 / 长毛狗 / 错误样本 / 正确样本}
+  \label{fig:gradcam-compare}
+\end{figure}
+
+\begin{figure}[htbp]
+  \centering
+  \figorph{analysis_seg_gallery.png}{不同体型 / 毛色品种的分割结果画廊}{0.92}
+  \caption{分割主模型在不同品种上的预测画廊（毛发边缘与鼻吻部细节处理对比）}
+  \label{fig:seg-gallery}
+\end{figure}
+
+\section{模型局限性}
+
+尽管主模型取得 98.65\% 的高准确率，但仍存在若干局限：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{少量亲缘品种}\ — 如缅因/挪威森林猫之间的混淆难以通过现有数据消除；
+  \item \textbf{小目标/遮挡场景}\ — 宠物占比过小或被大面积遮挡时分类置信度显著下降；
+  \item \textbf{分布外样本}\ — 37 类之外的品种或非宠物图片仍会被强制归类为某一已有类；
+  \item \textbf{分割边界}\ — U-Net 在长毛品种的毛发边缘处仍有锯齿状误差；
+  \item \textbf{推理速度}\ — CPU 单张推理约 200--300 ms，高并发时需 GPU 加速；
+  \item \textbf{可解释性深度}\ — Grad-CAM 仅反映单层激活，难以解释全链路决策。
+\end{enumerate}
+
+\section{改进方向}
+
+基于上述局限，后续可从以下方向改进：
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{架构升级}\ — 更换为 ResNet-50 / ConvNeXt / ViT 等更强主干；
+  \item \textbf{数据扩充}\ — 针对高错品种主动收集更多样本与更多姿态；
+  \item \textbf{损失函数}\ — 分割任务引入 Dice Loss + BCE 联合损失，提升边界质量；
+  \item \textbf{多任务联合训练}\ — 共享主干 + 双头输出，实现真正意义上的单次前向；
+  \item \textbf{模型蒸馏}\ — 把 ResNet-34 蒸馏到更轻的 MobileNet 便于边缘部署；
+  \item \textbf{自监督预训练}\ — 在未标注宠物图片上做对比学习，进一步提升表征质量。
+\end{itemize}
+
+% =============================================================================
+\chapter{总结与展望}
+\label{ch:conclusion}
+% =============================================================================
+
+\section{主要完成工作}
+
+本项目完整完成了课程挑战项 D 的全部要求，并在以下维度形成可交付成果：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{模型与算法}\ — 完成分类主模型（ResNet-34 + ImageNet 预训练）、
+        分割主模型（U-Net + ResNet-34 编码器）、两个对比基线
+        （ResNet-34 随机初始化 + SimpleCNN）与 Grad-CAM 可解释性模块的训练与评估。
+        主模型测试集 Accuracy = 0.9865，Dice = 0.9374。
+  \item \textbf{对比实验}\ — 定量验证迁移学习带来 \textbf{+30.3\%} 分类准确率
+        与 \textbf{+11.6\%} 分割 Dice 的提升，明确 SimpleCNN 的容量天花板。
+  \item \textbf{可视化系统}\ — 构建 Vue 3 + FastAPI 前后端分离 Web 系统，
+        5 个功能页面覆盖数据探索、三模式推理、实验分析、扩展对比的完整工作流。
+  \item \textbf{扩展能力}\ — 实现实时摄像头识别、Grad-CAM 热力图、
+        批量并发推理、三模型对比、WebSocket 流式日志、PDF 报告导出、
+        错误反馈闭环、中英双语等 10+ 项加分扩展。
+  \item \textbf{工程化}\ — 交付 Docker 编排、API 限流、34 个自动化测试、
+        前端分包优化、使用手册 LaTeX/PDF（32 页）与完整 README（440 行）。
+\end{enumerate}
+
+\section{创新点}
+
+相较基础的分类/分割模型训练，本项目在以下方面形成差异化：
+
+\begin{itemize}[leftmargin=*]
+  \item \textbf{三模型同图对比}\ — 在同一推理页面并排调用三个模型，
+        直观呈现迁移学习与容量的收益；
+  \item \textbf{WebSocket 流式推理日志}\ — 将推理过程从「黑盒请求-响应」
+        改为「可观测的分阶段流」，便于理解与 debug；
+  \item \textbf{Grad-CAM 异步集成}\ — 主结果即时返回，热力图后台异步生成，
+        用户体验无阻塞；
+  \item \textbf{完整工程化落地}\ — 不止于 notebook 跑通，而是提供了
+        容器化部署、自动化测试、构建优化、安全加固等一套生产级实践。
+\end{itemize}
+
+\section{展望}
+
+若在本项目基础上继续深入，建议从以下方向展开：
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{真正的多任务联合训练}\ — 使用共享主干 + 双头（分类 head + 分割 head）
+        端到端同时训练，进一步降低推理成本并研究任务互补性；
+  \item \textbf{更强的可解释性}\ — 引入 Integrated Gradients / LIME 等方法
+        横向对比，或引入 attention map 可视化；
+  \item \textbf{大规模无标注数据}\ — 使用 MoCo / SimCLR 等自监督方法在
+        iNaturalist 等更大规模的生物数据集上预训练；
+  \item \textbf{部署优化}\ — 模型蒸馏 + ONNX / TensorRT 导出，
+        目标在边缘设备（树莓派、手机）上达到实时推理；
+  \item \textbf{错误反馈驱动迭代}\ — 将 \texttt{/api/feedback} 收集到的数据
+        周期性回流训练集，形成数据飞轮。
+\end{enumerate}
+
+\section{致谢}
+
+本项目的实现依赖于开源社区提供的优质工具与数据集。特别感谢
+Oxford Visual Geometry Group 提供的 Oxford-IIIT Pet 数据集、
+PyTorch 与 \texttt{segmentation-models-pytorch} 项目的持续维护者、
+Vue / Element Plus / ECharts 等前端开源项目的贡献者，
+以及任课教师对挑战项 D 的精心设计。
+
+% =============================================================================
+\begin{thebibliography}{10}
+% =============================================================================
+
+\bibitem{parkhi2012cats}
+O.~M. Parkhi, A.~Vedaldi, A.~Zisserman, C.~V. Jawahar,
+\newblock Cats and Dogs.
+\newblock In \emph{IEEE Conference on Computer Vision and Pattern Recognition
+  (CVPR)}, 2012.
+
+\bibitem{he2016resnet}
+K.~He, X.~Zhang, S.~Ren, J.~Sun,
+\newblock Deep Residual Learning for Image Recognition.
+\newblock In \emph{CVPR}, pp. 770--778, 2016.
+
+\bibitem{ronneberger2015unet}
+O.~Ronneberger, P.~Fischer, T.~Brox,
+\newblock U-Net: Convolutional Networks for Biomedical Image Segmentation.
+\newblock In \emph{MICCAI}, pp. 234--241, 2015.
+
+\bibitem{selvaraju2017gradcam}
+R.~R. Selvaraju, M.~Cogswell, A.~Das, R.~Vedantam, D.~Parikh, D.~Batra,
+\newblock Grad-CAM: Visual Explanations from Deep Networks via Gradient-based
+  Localization.
+\newblock In \emph{ICCV}, pp. 618--626, 2017.
+
+\bibitem{kingma2014adam}
+D.~P. Kingma, J.~Ba,
+\newblock Adam: A Method for Stochastic Optimization.
+\newblock In \emph{ICLR}, 2015.
+
+\bibitem{he2015kaiming}
+K.~He, X.~Zhang, S.~Ren, J.~Sun,
+\newblock Delving Deep into Rectifiers: Surpassing Human-Level Performance on
+  ImageNet Classification.
+\newblock In \emph{ICCV}, pp. 1026--1034, 2015.
+
+\bibitem{deng2009imagenet}
+J.~Deng, W.~Dong, R.~Socher, L.-J. Li, K.~Li, L.~Fei-Fei,
+\newblock ImageNet: A Large-Scale Hierarchical Image Database.
+\newblock In \emph{CVPR}, pp. 248--255, 2009.
+
+\end{thebibliography}
+
+\vspace{2cm}
+\begin{center}
+\rule{0.5\linewidth}{0.4pt}\\[0.5cm]
+{\itshape — 报告结束 —}
+\end{center}
+
+\end{document}

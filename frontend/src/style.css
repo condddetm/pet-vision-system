@@ -1,0 +1,213 @@
+/* ══════════════════════════════════════════
+   Design System — Pet Vision 4.0
+   Based on UI/UX Pro Max Skill Recommendations
+   Style: Data-Dense Dashboard | Professional
+   ══════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  /* Skill-recommended palette: Blue data + Amber highlights */
+  --c-primary: #1E40AF;
+  --c-primary-soft: #3B82F6;
+  --c-accent: #F59E0B;
+  --c-green: #059669;
+  --c-red: #DC2626;
+  --c-cyan: #0891B2;
+  --c-dark: #0F172A;
+  --c-text: #1E3A8A;
+  --c-text-body: #334155;
+  --c-muted: #64748B;
+  --c-border: #E2E8F0;
+  --c-bg: #F8FAFC;
+  --c-card: #FFFFFF;
+
+  /* Skill design variables */
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  --grid-gap: 12px;
+  --card-padding: 16px;
+  --sidebar-width: 240px;
+  --header-height: 56px;
+
+  /* Shadows — professional, not flashy */
+  --shadow-xs: 0 1px 2px rgba(0,0,0,.05);
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 8px 24px rgba(0,0,0,.04);
+  --shadow-lg: 0 8px 24px rgba(0,0,0,.1), 0 16px 48px rgba(0,0,0,.06);
+
+  --ease: cubic-bezier(.4,0,.2,1);
+  --dur: .2s;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; }
+
+body {
+  font-family: 'Fira Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+               'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text-body);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+/* ─── Route transition ─── */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity .25s var(--ease), transform .25s var(--ease);
+}
+.fade-enter-from { opacity: 0; transform: translateY(10px); }
+.fade-leave-to   { opacity: 0; transform: translateY(-6px); }
+
+/* ═══════════════════════════════════════
+   Keyframes
+   ═══════════════════════════════════════ */
+@keyframes gradientShift {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-8px); }
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* ═══════════════════════════════════════
+   Card 系统 — Clean, Professional
+   ═══════════════════════════════════════ */
+.el-card {
+  border-radius: var(--radius) !important;
+  border: 1px solid var(--c-border) !important;
+  background: var(--c-card) !important;
+  box-shadow: var(--shadow) !important;
+  transition: all var(--dur) var(--ease) !important;
+  overflow: hidden !important;
+}
+.el-card:hover {
+  box-shadow: var(--shadow-md) !important;
+  transform: translateY(-2px) !important;
+}
+.el-card .el-card__header {
+  padding: 14px var(--card-padding) !important;
+  border-bottom: 1px solid var(--c-border) !important;
+  background: #F8FAFC !important;
+  font-weight: 700;
+}
+.el-card .el-card__body {
+  padding: var(--card-padding) !important;
+}
+
+/* ─── Button ─── */
+.el-button {
+  border-radius: var(--radius-sm) !important;
+  font-family: 'Fira Sans', sans-serif !important;
+  font-weight: 600 !important;
+  transition: all .2s ease !important;
+  cursor: pointer;
+}
+.el-button--primary {
+  background: var(--c-primary) !important;
+  border-color: var(--c-primary) !important;
+  box-shadow: 0 2px 8px rgba(30,64,175,.25) !important;
+}
+.el-button--primary:hover {
+  background: #1E3A8A !important;
+  box-shadow: 0 4px 12px rgba(30,64,175,.35) !important;
+  transform: translateY(-1px);
+}
+.el-button--success {
+  background: var(--c-green) !important;
+  border-color: var(--c-green) !important;
+  box-shadow: 0 2px 8px rgba(5,150,105,.25) !important;
+}
+
+/* ─── Tag ─── */
+.el-tag {
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-family: 'Fira Sans', sans-serif !important;
+}
+
+/* ─── Table ─── */
+.el-table {
+  border-radius: var(--radius) !important;
+  overflow: hidden;
+  font-family: 'Fira Sans', sans-serif;
+}
+.el-table th {
+  background: #F1F5F9 !important;
+  font-weight: 700 !important;
+  color: var(--c-text) !important;
+}
+
+/* ─── Descriptions ─── */
+.el-descriptions { --el-descriptions-item-bordered-label-background: #F1F5F9; }
+
+/* ═══════════════════════════════════════
+   Utilities
+   ═══════════════════════════════════════ */
+.badge-pulse { animation: pulse 2s infinite; }
+
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #E2E8F0 25%, #CBD5E1 50%, #E2E8F0 75%);
+  background-size: 1200px 100%;
+  animation: shimmer 1.4s infinite linear;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in { animation: fadeInUp .4s var(--ease) both; }
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--c-primary), var(--c-primary-soft));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 结果卡片进入过渡 */
+.result-slide-enter-active {
+  transition: all .35s cubic-bezier(.34,1.2,.64,1);
+}
+.result-slide-enter-from {
+  opacity: 0;
+  transform: translateY(20px) scale(.97);
+}
+.result-slide-leave-active { transition: opacity .2s ease; }
+.result-slide-leave-to     { opacity: 0; }
+
+/* ─── 统计卡片 ─── */
+.stat-card {
+  text-align: center;
+  padding: 20px 14px;
+  border-radius: var(--radius);
+  background: var(--c-card);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--c-border);
+  transition: all var(--dur) var(--ease);
+  cursor: default;
+}
+.stat-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: #BFDBFE;
+}
+.stat-card .value { font-size: 28px; font-weight: 800; color: var(--c-primary); font-family: 'Fira Code', monospace; }
+.stat-card .label { font-size: 13px; color: var(--c-muted); margin-top: 4px; }

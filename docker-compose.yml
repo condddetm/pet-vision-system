@@ -1,0 +1,57 @@
+# =============================================================================
+# Pet MultiTask System — 一键部署编排
+# 使用方法:
+#   构建并启动:   docker compose up -d --build
+#   查看日志:    docker compose logs -f
+#   停止:        docker compose down
+#   清理重建:    docker compose down -v && docker compose up -d --build
+# =============================================================================
+
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pet-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # 允许本地前端访问；生产环境请改为实际域名
+      ALLOWED_ORIGINS: "http://localhost:5173,http://127.0.0.1:5173,http://localhost"
+      PYTHONUNBUFFERED: "1"
+    volumes:
+      # 模型权重（运行时挂载，避免镜像膨胀）
+      - ./backend/weights:/app/weights:ro
+      # 训练产物（指标、混淆矩阵、案例图）
+      - ./backend/artifacts:/app/artifacts
+      # 推理临时文件
+      - ./backend/tmp:/app/tmp
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/').read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - pet-net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pet-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - pet-net
+
+networks:
+  pet-net:
+    driver: bridge
